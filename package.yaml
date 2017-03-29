@@ -1,0 +1,26 @@
+name:                apidoc-hs
+version:             0.1.0.0
+-- synopsis:
+-- description:
+homepage:            https://github.com/utdemir/apidoc-hs#readme
+license:             BSD3
+author:              Utku Demir
+maintainer:          utdemir@gmail.com
+copyright:           BSD3
+category:            Web
+extra-source-files:
+- README.md
+
+dependencies:
+  - base >= 4.7 && < 5
+  - aeson
+  - containers
+  - text
+  - bytestring
+  - pretty-show
+  - template-haskell
+
+executables:
+  apidoc-hs:
+    source-dirs:      src
+    main:             Main.hs

@@ -1,0 +1,1034 @@
+{
+    "apidoc": {
+        "version": "0.11.20"
+    },
+    "application": {
+        "key": "apidoc-spec"
+    },
+    "attributes": [],
+    "description": "Specification of apidoc api.json schema",
+    "enums": [
+        {
+            "attributes": [],
+            "name": "method",
+            "plural": "methods",
+            "values": [
+                {
+                    "attributes": [],
+                    "name": "GET"
+                },
+                {
+                    "attributes": [],
+                    "name": "POST"
+                },
+                {
+                    "attributes": [],
+                    "name": "PUT"
+                },
+                {
+                    "attributes": [],
+                    "name": "PATCH"
+                },
+                {
+                    "attributes": [],
+                    "name": "DELETE"
+                },
+                {
+                    "attributes": [],
+                    "name": "HEAD"
+                },
+                {
+                    "attributes": [],
+                    "name": "CONNECT"
+                },
+                {
+                    "attributes": [],
+                    "name": "OPTIONS"
+                },
+                {
+                    "attributes": [],
+                    "name": "TRACE"
+                }
+            ]
+        },
+        {
+            "attributes": [],
+            "name": "parameter_location",
+            "plural": "parameter_locations",
+            "values": [
+                {
+                    "attributes": [],
+                    "name": "Path"
+                },
+                {
+                    "attributes": [],
+                    "name": "Query"
+                },
+                {
+                    "attributes": [],
+                    "name": "Form"
+                }
+            ]
+        },
+        {
+            "attributes": [],
+            "name": "response_code_option",
+            "plural": "response_code_options",
+            "values": [
+                {
+                    "attributes": [],
+                    "name": "Default"
+                }
+            ]
+        }
+    ],
+    "headers": [],
+    "imports": [],
+    "info": {
+        "contact": {
+            "email": "mbryzek@alum.mit.edu",
+            "name": "Michael Bryzek",
+            "url": "http://twitter.com/mbryzek"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "http://opensource.org/licenses/MIT"
+        }
+    },
+    "models": [
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "example": "1.0.3",
+                    "name": "version",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "name": "apidoc",
+            "plural": "apidocs"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "description": "Unique key identifying this application",
+                    "name": "key",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "name": "application",
+            "plural": "applications"
+        },
+        {
+            "attributes": [],
+            "description": "Represents an additional attribute that is attached to one of the objects in apidoc. The main use case is to capture additional metadata that doesn't necessarily define the API but aids in code generation. Examples would be hints for certain code generators about classes to extend, interfaces to implement, annotations to add, names to assign to certain methods, etc. The specific attributes will be applicable only in the context of the specific code generators usings them.",
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "name",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "value",
+                    "required": true,
+                    "type": "object"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                }
+            ],
+            "name": "attribute",
+            "plural": "attributes"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "body",
+            "plural": "bodies"
+        },
+        {
+            "attributes": [],
+            "description": "Describes the primary contact for this service",
+            "fields": [
+                {
+                    "attributes": [],
+                    "example": "Michael Bryzek",
+                    "name": "name",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "example": "http://www.apidoc.me",
+                    "name": "url",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "example": "michael@test.apidoc.me",
+                    "name": "email",
+                    "required": false,
+                    "type": "string"
+                }
+            ],
+            "name": "contact",
+            "plural": "contacts"
+        },
+        {
+            "attributes": [],
+            "description": "Indicates that this particular element is considered deprecated in the API. See the description for details",
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                }
+            ],
+            "name": "deprecation",
+            "plural": "deprecations"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "name",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "plural",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "name": "values",
+                    "required": true,
+                    "type": "[enum_value]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "enum",
+            "plural": "enums"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "name",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "enum_value",
+            "plural": "enum_values"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "name",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "name": "default",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "required",
+                    "required": true,
+                    "type": "boolean"
+                },
+                {
+                    "attributes": [],
+                    "name": "minimum",
+                    "required": false,
+                    "type": "long"
+                },
+                {
+                    "attributes": [],
+                    "name": "maximum",
+                    "required": false,
+                    "type": "long"
+                },
+                {
+                    "attributes": [],
+                    "name": "example",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "field",
+            "plural": "fields"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "name",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "name": "required",
+                    "required": true,
+                    "type": "boolean"
+                },
+                {
+                    "attributes": [],
+                    "name": "default",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "header",
+            "plural": "headers"
+        },
+        {
+            "attributes": [],
+            "description": "An import is used to declare a dependency on another application. This allows you to reference the models and or enums from that application in your own app.",
+            "fields": [
+                {
+                    "attributes": [],
+                    "description": "Full URI to the service.json file of the service we are importing",
+                    "example": "http://www.apidoc.me/bryzek/apidoc-spec/0.7.38/service.json",
+                    "name": "uri",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "description": "the fully qualified namespace that we have imported",
+                    "example": "com.bryzek.apidoc",
+                    "name": "namespace",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "organization",
+                    "required": true,
+                    "type": "organization"
+                },
+                {
+                    "attributes": [],
+                    "name": "application",
+                    "required": true,
+                    "type": "application"
+                },
+                {
+                    "attributes": [],
+                    "description": "The version of the service that we are importing",
+                    "example": "1.0.0",
+                    "name": "version",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "description": "Models made available by this import",
+                    "name": "enums",
+                    "required": true,
+                    "type": "[string]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "description": "Unions made available by this import",
+                    "name": "unions",
+                    "required": true,
+                    "type": "[string]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "description": "Models made available by this import",
+                    "name": "models",
+                    "required": true,
+                    "type": "[string]"
+                }
+            ],
+            "name": "import",
+            "plural": "imports"
+        },
+        {
+            "attributes": [],
+            "description": "General metadata about this service",
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "license",
+                    "required": false,
+                    "type": "license"
+                },
+                {
+                    "attributes": [],
+                    "name": "contact",
+                    "required": false,
+                    "type": "contact"
+                }
+            ],
+            "name": "info",
+            "plural": "infoes"
+        },
+        {
+            "attributes": [],
+            "description": "Describes the software license contact for this service",
+            "fields": [
+                {
+                    "attributes": [],
+                    "example": "MIT",
+                    "name": "name",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "example": "http://opensource.org/licenses/MIT",
+                    "name": "url",
+                    "required": false,
+                    "type": "string"
+                }
+            ],
+            "name": "license",
+            "plural": "licenses"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "name",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "plural",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "name": "fields",
+                    "required": true,
+                    "type": "[field]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "model",
+            "plural": "models"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "method",
+                    "required": true,
+                    "type": "method"
+                },
+                {
+                    "attributes": [],
+                    "description": "The full path to this operation, relative to the service's base url.",
+                    "name": "path",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "name": "body",
+                    "required": false,
+                    "type": "body"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "parameters",
+                    "required": true,
+                    "type": "[parameter]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "responses",
+                    "required": true,
+                    "type": "[response]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "operation",
+            "plural": "operations"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "description": "Unique key identifying the organization that owns this service",
+                    "name": "key",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "name": "organization",
+            "plural": "organizations"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "name",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "location",
+                    "required": true,
+                    "type": "parameter_location"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "name": "required",
+                    "required": true,
+                    "type": "boolean"
+                },
+                {
+                    "attributes": [],
+                    "name": "default",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "minimum",
+                    "required": false,
+                    "type": "long"
+                },
+                {
+                    "attributes": [],
+                    "name": "maximum",
+                    "required": false,
+                    "type": "long"
+                },
+                {
+                    "attributes": [],
+                    "name": "example",
+                    "required": false,
+                    "type": "string"
+                }
+            ],
+            "name": "parameter",
+            "plural": "parameters"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "description": "The type of this resource will map to a defined model, enum, or union type",
+                    "name": "type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "plural",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "description": "The path to this specific resource. This was added in 2016 to help us differentiate between the resource path and the operation path which can be helpful when, for example, generating method names for operations. This field is optional as some of our input formats (e.g. swagger) do not explicitly differenties resoure paths.",
+                    "name": "path",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "name": "operations",
+                    "required": true,
+                    "type": "[operation]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "resource",
+            "plural": "resources"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "code",
+                    "required": true,
+                    "type": "response_code"
+                },
+                {
+                    "attributes": [],
+                    "name": "type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                }
+            ],
+            "name": "response",
+            "plural": "responses"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "description": "Documents that this is an apidoc document, noting the specific version used. Internally the version is then used for backwards compatibility when applicable as new features are added to apidoc.",
+                    "name": "apidoc",
+                    "required": true,
+                    "type": "apidoc"
+                },
+                {
+                    "attributes": [],
+                    "name": "name",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "organization",
+                    "required": true,
+                    "type": "organization"
+                },
+                {
+                    "attributes": [],
+                    "name": "application",
+                    "required": true,
+                    "type": "application"
+                },
+                {
+                    "attributes": [],
+                    "description": "Fully qualified namespace for this service",
+                    "example": "com.bryzek.apidoc",
+                    "name": "namespace",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "example": "1.0.0",
+                    "name": "version",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "base_url",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "info",
+                    "required": true,
+                    "type": "info"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "headers",
+                    "required": true,
+                    "type": "[header]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "imports",
+                    "required": true,
+                    "type": "[import]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "enums",
+                    "required": true,
+                    "type": "[enum]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "unions",
+                    "required": true,
+                    "type": "[union]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "models",
+                    "required": true,
+                    "type": "[model]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "resources",
+                    "required": true,
+                    "type": "[resource]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "service",
+            "plural": "services"
+        },
+        {
+            "attributes": [],
+            "fields": [
+                {
+                    "attributes": [],
+                    "name": "name",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "plural",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "description": "If a type discriminator is provided, serialization of these union types will always contain a field named with the value of the discriminator that will contain the name of the type. This provides a simpler (for many use cases) JSON serialization/deserialization mechanism. When specified, apidoc itself will verify that none of the types in the union type itself contain a field with the same name as the discriminator",
+                    "example": "discriminator or type",
+                    "name": "discriminator",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "description": "The names of the types that make up this union type",
+                    "minimum": 1,
+                    "name": "types",
+                    "required": true,
+                    "type": "[union_type]"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "union",
+            "plural": "unions"
+        },
+        {
+            "attributes": [],
+            "description": "Metadata about one of the types that is part of a union type",
+            "fields": [
+                {
+                    "attributes": [],
+                    "description": "The name of a type (a primitive, model name, or enum name) that makes up this union type",
+                    "name": "type",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "description",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "attributes": [],
+                    "name": "deprecation",
+                    "required": false,
+                    "type": "deprecation"
+                },
+                {
+                    "attributes": [],
+                    "default": "[]",
+                    "name": "attributes",
+                    "required": true,
+                    "type": "[attribute]"
+                }
+            ],
+            "name": "union_type",
+            "plural": "union_types"
+        }
+    ],
+    "name": "apidoc spec",
+    "namespace": "com.bryzek.apidoc.spec.v0",
+    "organization": {
+        "key": "bryzek"
+    },
+    "resources": [],
+    "unions": [
+        {
+            "attributes": [],
+            "name": "response_code",
+            "plural": "response_codes",
+            "types": [
+                {
+                    "attributes": [],
+                    "description": "Documents an HTTP status code (e.g. 200, 409, etc.)",
+                    "type": "integer"
+                },
+                {
+                    "attributes": [],
+                    "description": "An individual operation can specify a response code of default to handle all other response codes. This is most useful for providing consistent error handling from an operation.",
+                    "type": "response_code_option"
+                }
+            ]
+        }
+    ],
+    "version": "0.12.0-SNAPSHOT"
+}

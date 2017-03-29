@@ -91,12 +91,12 @@ instance FromJSON ModelField where
 
 --------------------------------------------------------------------------------
 
-data Api =
-  Api
-    { _apiEnums  :: [Enum]
-    , _apiUnions :: [Union]
-    , _apiModels :: [Model]
-    }  
+data Api
+  = Api
+      { _apiEnums  :: [Enum]
+      , _apiUnions :: [Union]
+      , _apiModels :: [Model]
+      }  
   deriving (Show, Eq, Ord)
 
 instance FromJSON Api where
@@ -104,13 +104,3 @@ instance FromJSON Api where
     Api <$> obj .:? "enums"  .!= []
         <*> obj .:? "unions" .!= []
         <*> obj .:? "models" .!= []
-
---------------------------------------------------------------------------------
-
-test :: IO ()
-test
-  = pPrint =<< eitherDecode @Api <$> BL.readFile "static/apidoc-spec-service.json"
-
-
-
-  

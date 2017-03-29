@@ -1,4 +1,4 @@
--- This file has been generated from package.yaml by hpack version 0.15.0.
+-- This file has been generated from package.yaml by hpack version 0.17.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -30,5 +30,4 @@ executable apidoc-hs
       Apidoc.Internal.Stage1
       Apidoc.Internal.Stage1.TH
       Apidoc.Internal.Stage1.Types
-      Types
   default-language: Haskell2010

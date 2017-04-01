@@ -1,28 +1,29 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Apidoc.Internal.TH.Utils where
 
 --------------------------------------------------------------------------------
-import Prelude hiding (Enum)
-import Data.Functor
-import Language.Haskell.TH
-import Text.Casing
-import GHC.Generics (Generic)
-import Data.Typeable (Typeable)
-import Data.Attoparsec.ByteString as A
-import qualified Data.ByteString as BS
-import Data.Int
-import Data.Aeson
-import Control.Applicative
-import qualified Data.Text as T
-import Data.UUID.Types (UUID)
-import Data.Map (Map)
-import qualified Data.ByteString.Char8 as BS8
-import Data.Maybe
+import           Control.Applicative
+import           Data.Aeson
+import qualified Data.HashMap.Strict as HM
+import           Data.Attoparsec.ByteString as A
+import qualified Data.ByteString            as BS
+import qualified Data.ByteString.Char8      as BS8
+import           Data.Functor
+import           Data.Int
+import           Data.Map                   (Map)
+import           Data.Maybe
+import qualified Data.Text                  as T
+import           Data.Typeable              (Typeable)
+import           Data.UUID.Types            (UUID)
+import           GHC.Generics               (Generic)
+import           Language.Haskell.TH
+import           Prelude                    hiding (Enum)
+import           Text.Casing
 --------------------------------------------------------------------------------
-import Apidoc.Internal.TH.Types
+import           Apidoc.Internal.TH.Types
 --------------------------------------------------------------------------------
 
 mkData :: Data -> Dec
@@ -30,7 +31,7 @@ mkData (Data (Nm nm) fs)
   = DataD [] name [] Nothing [RecC name fields] derivings
   where
     name = mkName $ renderType nm
-    fields = flip map fs $ \(Nm fnm, ty, tyRequired) ->      
+    fields = flip map fs $ \(Nm fnm, ty, tyRequired) ->
       ( mkName $ renderField nm fnm
       , Bang NoSourceUnpackedness NoSourceStrictness
       , let type_ = tyToType ty
@@ -38,7 +39,7 @@ mkData (Data (Nm nm) fs)
               then type_
               else AppT (ConT ''Maybe) type_
       )
-    
+
 
 mkEnum :: Enum -> Dec
 mkEnum (Enum (Nm nm) fs)
@@ -60,7 +61,7 @@ mkUnion (Union (Nm nm) ts)
 
 mkDataFromJSON :: Data -> Dec
 mkDataFromJSON (Data (Nm nm) fs)
-  = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm)) 
+  = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm))
       [(ValD (VarP 'parseJSON) (NormalB body) [])]
   where
     body
@@ -80,7 +81,7 @@ mkDataFromJSON (Data (Nm nm) fs)
 
 mkEnumFromJSON :: Enum -> Dec
 mkEnumFromJSON (Enum (Nm nm) fs)
-  = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm)) 
+  = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm))
       [(ValD (VarP 'parseJSON) (NormalB body) [])]
   where
     body
@@ -100,16 +101,37 @@ mkEnumFromJSON (Enum (Nm nm) fs)
                (LitE . StringL $ ": not a valid " ++ renderType nm)
 
 mkUnionFromJSON :: Union -> Dec
-mkUnionFromJSON (Union (Nm nm) fs)
-  = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm)) 
+mkUnionFromJSON (Union (Nm nm) ts)
+  = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm))
       [(ValD (VarP 'parseJSON) (NormalB body) [])]
   where
-    body = AppE (VarE 'error) (LitE $ StringL "can not deserialize unions yet")
+    body
+      = AppE (AppE (VarE 'withObject) (LitE . StringL $ renderType nm)) . LamE [VarP (mkName "obj")] $
+          CaseE (AppE (VarE 'HM.toList) (VarE $ mkName "obj"))
+            [ Match
+                (ListP [TupP [VarP (mkName "tag"), VarP (mkName "val")]])
+                (GuardedB
+                   [ ( NormalG (
+                         InfixE
+                           (Just . VarE $ mkName "tag")
+                           (VarE '(==))
+                           (Just . AppE (VarE 'T.pack) . LitE . StringL $ ty))
+                     , InfixE
+                         (Just . ConE . mkName $ renderType nm ++ renderType ty)
+                         (VarE ('(<$>)))
+                         (Just $ AppE (VarE 'parseJSON) (VarE (mkName "val")))
+                     )
+                   | (Ty ty) <- ts
+                   ]
+                )
+                []
+            , Match WildP (NormalB $ AppE (VarE 'fail) (LitE . StringL $ "invalid union")) []
+            ]
 
 --------------------------------------------------------------------------------
 
 mkDataToJSON :: Data -> Dec
-mkDataToJSON = undefined
+mkDataToJSON (Data nm fs) = undefined
 
 mkEnumToJSON :: Enum -> Dec
 mkEnumToJSON = undefined
@@ -153,7 +175,7 @@ tyToType (Ty ty)
 
     listParser :: Parser Type
     listParser = AppT (ConT ''[]) <$> ("[" *> parser <* "]")
-    
+
     mapParser :: Parser Type
     mapParser = AppT (AppT (ConT ''Map) (ConT ''String)) <$> ("map[" *> parser <* "]")
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -22,11 +23,12 @@ import Control.Applicative
 import Data.Functor
 import Debug.Trace
 import Data.Map (Map)
-import Control.Lens
 import GHC.Generics (Generic)
 import Data.Typeable
 --------------------------------------------------------------------------------
-import Apidoc.Internal.Stage1.Types
+import qualified Apidoc.Internal.Stage1.Types as T
+import Apidoc.Internal.TH.Utils
+import Apidoc.Internal.TH.Types
 --------------------------------------------------------------------------------
 
 stage1 :: FilePath -> DecsQ
@@ -36,95 +38,38 @@ stage1 serviceSpec = do
     Left err  -> error $ "Parser error on " ++ serviceSpec ++ ": " ++ err
     Right api -> stage1' api
 
-stage1' :: Api -> DecsQ
+stage1' :: T.Api -> DecsQ
 stage1' api
-  = fmap (concat . concat) . sequence
-      $ [ mapM renderModel (_apiModels api)
-        , mapM renderUnion (_apiUnions api)
-        , mapM renderEnum  (_apiEnums api)
-        ]
+  = return . concat . concat $
+      [ map renderModel    (T.apiModels api)
+      , map renderUnion    (T.apiUnions api)
+      , map renderEnum     (T.apiEnums api)
+      ]
 
-derivings :: Cxt
-derivings = map ConT [''Show, ''Eq, ''Generic, ''Typeable]
-
-renderModel :: Model -> DecsQ
-renderModel model
-  = (:) <$> return (DataD [] name [] Nothing [RecC name fields] derivings)
-        <*> return [] -- makeLenses name
+renderModel :: T.Model -> [Dec]
+renderModel T.Model{..}
+  = [ mkData d, mkDataFromJSON d ]
   where
-    name = mkName . renderModelName $ _modelName model
-    
-    fields :: [VarBangType]
-    fields = map mkField (_modelFields model)
+    d = Data (Nm $ T.unpack modelName) . flip map modelFields
+          $ \T.ModelField{..} -> ( Nm $ T.unpack modelFieldName
+                                 , Ty $ T.unpack modelFieldType
+                                 , modelFieldRequired
+                                 )
 
-    mkField :: ModelField -> VarBangType
-    mkField field =
-      ( mkName $ renderFieldName (_modelName model) (_modelFieldName field)
-      , Bang NoSourceUnpackedness NoSourceStrictness
-      , let ty = typeNameToType $ _modelFieldType field 
-        in  if _modelFieldRequired field
-              then ty
-              else AppT (ConT ''Maybe) ty
-      )
-
-renderFieldName :: T.Text -> T.Text -> String
-renderFieldName modelName fieldName
-  = "_" ++ camel (T.unpack modelName) ++ pascal (T.unpack fieldName)
-
-renderModelName :: T.Text -> String
-renderModelName = pascal . T.unpack
-
-typeNameToType :: T.Text -> Type
-typeNameToType typeName
-  = case parseOnly parser typeName of
-      Left err -> error $ "Erorr parsing type: " ++ T.unpack typeName ++ ". Error: " ++ err
-      Right ty -> ty
+renderUnion :: T.Union -> [Dec]
+renderUnion T.Union{..}
+  = [ mkUnion u, mkUnionFromJSON u ]
   where
-    parser :: Parser Type
-    parser
-        = "boolean"           $> ConT ''Bool
-      <|> "date-iso8601"      $> ConT ''()
-      <|> "date-time-iso8601" $> ConT ''()
-      <|> "decimal"           $> ConT ''Rational
-      <|> "double"            $> ConT ''Double
-      <|> "integer"           $> ConT ''Int32
-      <|> "long"              $> ConT ''Int64
-      <|> "object"            $> ConT ''Object
-      <|> "string"            $> ConT ''T.Text
-      <|> "unit"              $> ConT ''()
-      <|> "uuid"              $> ConT ''UUID
-      <|> listParser
-      <|> mapParser
-      <|> customParser
+    u = Union (Nm $ T.unpack unionName) 
+          $ map (Ty . T.unpack . T.unionTypeType) unionTypes
 
-    listParser :: Parser Type
-    listParser = AppT (ConT ''[]) <$> ("[" *> parser <* "]")
-    
-    mapParser :: Parser Type
-    mapParser = AppT (AppT (ConT ''Map) (ConT ''String)) <$> ("map[" *> parser <* "]")
-
-    customParser :: Parser Type
-    customParser = ConT . mkName . pascal . T.unpack <$> A.takeWhile (inClass "a-zA-Z0-9_")
-
-renderUnion :: Union -> DecsQ
-renderUnion union
-  = return [DataD [] (mkName name) [] Nothing (map mkValue $ _unionTypes union) derivings]
+renderEnum :: T.Enum -> [Dec]
+renderEnum T.Enum{..}
+  = [ mkEnum e, mkEnumFromJSON e ]
   where
-    name = renderModelName $ _unionName union
-    
-    mkValue val = RecC (mkName $ name ++ (pascal . T.unpack) (_unionTypeType val)) [
-      ( mkName $ renderFieldName (_unionName union) (_unionTypeType val)
-      , Bang NoSourceUnpackedness NoSourceStrictness
-      , typeNameToType $ _unionTypeType val
-      )]
-      
-renderEnum :: Enum -> DecsQ
-renderEnum enum
-  = return [DataD [] (mkName name) [] Nothing (map mkValue $ _enumValues enum)  derivings]
-  where
-    name = renderModelName $ _enumName enum
-    mkValue val = RecC (mkName $ name ++ (pascal . T.unpack) (_enumValueName val)) []
-  
+    e = Enum (Nm $ T.unpack enumName) 
+          $ map (Nm . T.unpack . T.enumValueName) enumValues
+
 --------------------------------------------------------------------------------
 
 test :: IO ()

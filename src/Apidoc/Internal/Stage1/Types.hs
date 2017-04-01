@@ -14,7 +14,7 @@ import Text.Show.Pretty
 
 data UnionType
   = UnionType
-      { _unionTypeType :: Text
+      { unionTypeType :: Text
       }
   deriving (Show, Eq, Ord)
 
@@ -26,8 +26,8 @@ instance FromJSON UnionType where
 
 data Union
   = Union
-      { _unionName  :: Text
-      , _unionTypes :: [UnionType]
+      { unionName  :: Text
+      , unionTypes :: [UnionType]
       }
   deriving (Show, Eq, Ord)
 
@@ -39,7 +39,7 @@ instance FromJSON Union where
 
 data EnumValue
   = EnumValue
-      { _enumValueName :: Text
+      { enumValueName :: Text
       }
   deriving (Show, Eq, Ord)
 
@@ -51,8 +51,8 @@ instance FromJSON EnumValue where
 
 data Enum
   = Enum
-      { _enumName   :: Text
-      , _enumValues :: [EnumValue]
+      { enumName   :: Text
+      , enumValues :: [EnumValue]
       }
   deriving (Show, Eq, Ord)
 
@@ -64,8 +64,8 @@ instance FromJSON Enum where
 
 data Model
   = Model
-     { _modelName   :: Text
-     , _modelFields :: [ModelField]
+     { modelName   :: Text
+     , modelFields :: [ModelField]
      }
   deriving (Show, Eq, Ord)
 
@@ -77,9 +77,9 @@ instance FromJSON Model where
 
 data ModelField
   = ModelField
-      { _modelFieldName     :: Text
-      , _modelFieldType     :: Text
-      , _modelFieldRequired :: Bool
+      { modelFieldName     :: Text
+      , modelFieldType     :: Text
+      , modelFieldRequired :: Bool
       }
   deriving (Show, Eq, Ord)
 
@@ -93,9 +93,9 @@ instance FromJSON ModelField where
 
 data Api
   = Api
-      { _apiEnums  :: [Enum]
-      , _apiUnions :: [Union]
-      , _apiModels :: [Model]
+      { apiEnums  :: [Enum]
+      , apiUnions :: [Union]
+      , apiModels :: [Model]
       }  
   deriving (Show, Eq, Ord)
 

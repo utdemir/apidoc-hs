@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Apidoc.Internal.Stage1.Types where
+module Apidoc.Internal.Bootstrap.Types where
 
 --------------------------------------------------------------------------------
 import Prelude hiding (Enum)
@@ -91,16 +91,16 @@ instance FromJSON ModelField where
 
 --------------------------------------------------------------------------------
 
-data Api
-  = Api
-      { apiEnums  :: [Enum]
-      , apiUnions :: [Union]
-      , apiModels :: [Model]
+data Service
+  = Service
+      { serviceEnums  :: [Enum]
+      , serviceUnions :: [Union]
+      , serviceModels :: [Model]
       }  
   deriving (Show, Eq, Ord)
 
-instance FromJSON Api where
-  parseJSON = withObject "Api" $ \obj ->
-    Api <$> obj .:? "enums"  .!= []
-        <*> obj .:? "unions" .!= []
-        <*> obj .:? "models" .!= []
+instance FromJSON Service where
+  parseJSON = withObject "Service" $ \obj ->
+    Service <$> obj .:? "enums"  .!= []
+            <*> obj .:? "unions" .!= []
+            <*> obj .:? "models" .!= []

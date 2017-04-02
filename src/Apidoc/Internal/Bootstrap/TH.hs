@@ -4,7 +4,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Apidoc.Internal.Stage1.TH where
+module Apidoc.Internal.Bootstrap.TH where
 
 --------------------------------------------------------------------------------
 import Prelude hiding (Enum)
@@ -26,24 +26,24 @@ import Data.Map (Map)
 import GHC.Generics (Generic)
 import Data.Typeable
 --------------------------------------------------------------------------------
-import qualified Apidoc.Internal.Stage1.Types as T
+import qualified Apidoc.Internal.Bootstrap.Types as T
 import Apidoc.Internal.TH.Utils
 import Apidoc.Internal.TH.Types
 --------------------------------------------------------------------------------
 
-stage1 :: FilePath -> DecsQ
-stage1 serviceSpec = do
+bootstrap :: FilePath -> DecsQ
+bootstrap serviceSpec = do
   json <- runIO (BL.readFile serviceSpec)
   case eitherDecode json of
     Left err  -> error $ "Parser error on " ++ serviceSpec ++ ": " ++ err
-    Right api -> stage1' api
+    Right api -> bootstrap' api
 
-stage1' :: T.Api -> DecsQ
-stage1' api
+bootstrap' :: T.Service -> DecsQ
+bootstrap' service
   = return . concat . concat $
-      [ map renderModel    (T.apiModels api)
-      , map renderUnion    (T.apiUnions api)
-      , map renderEnum     (T.apiEnums api)
+      [ map renderModel (T.serviceModels service)
+      , map renderUnion (T.serviceUnions service)
+      , map renderEnum  (T.serviceEnums service)
       ]
 
 renderModel :: T.Model -> [Dec]
@@ -70,10 +70,8 @@ renderEnum T.Enum{..}
     e = Enum (Nm $ T.unpack enumName) 
           $ map (Nm . T.unpack . T.enumValueName) enumValues
 
---------------------------------------------------------------------------------
-
-test :: IO ()
-test = do
-  decs <- runQ $ stage1 "static/apidoc-spec-service.json"
-  print $ ppr decs
-
+-- test :: IO ()
+-- test = do
+--   decs <- runQ $ bootstrap "static/apidoc-spec-service.json"
+--   print $ ppr decs
+-- 

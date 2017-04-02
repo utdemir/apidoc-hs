@@ -32,10 +32,10 @@ executable apidoc-hs
     , attoparsec
     , lens
   other-modules:
-      Apidoc.Internal.Stage1
-      Apidoc.Internal.Stage1.TH
-      Apidoc.Internal.Stage1.TH2
-      Apidoc.Internal.Stage1.Types
+      Apidoc.Internal.Bootstrap
+      Apidoc.Internal.Bootstrap.TH
+      Apidoc.Internal.Bootstrap.Types
+      Apidoc.Internal.Parser
       Apidoc.Internal.TH.Types
       Apidoc.Internal.TH.Utils
   default-language: Haskell2010

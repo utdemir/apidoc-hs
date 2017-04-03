@@ -18,7 +18,6 @@ import Data.Aeson
 import qualified Data.Text as T
 import Data.Int
 import Data.UUID.Types (UUID)
-import Data.Attoparsec.Text as A
 import Control.Applicative
 import Data.Functor
 import Debug.Trace
@@ -26,48 +25,78 @@ import Data.Map (Map)
 import Control.Monad
 import GHC.Generics (Generic)
 import Data.Typeable
+import Network.HTTP
+import Network.URI
 --------------------------------------------------------------------------------
-import qualified Apidoc.Types as T
+import qualified Apidoc.Internal.Bootstrap as T
 import Apidoc.Internal.TH.Utils
 import Apidoc.Internal.TH.Types
 --------------------------------------------------------------------------------
 
+parse :: BL.ByteString -> Q T.Service
+parse json 
+  = case eitherDecode json of
+      Left err  -> error $ "Parse error on apidoc spec: " ++ err
+      Right api -> return api
+
 read :: FilePath -> Q T.Service
-read serviceSpec = do
-  json <- runIO (BL.readFile serviceSpec)
-  case eitherDecode json of
-    Left err  -> error $ "Parser error on " ++ serviceSpec ++ ": " ++ err
-    Right api -> return api
+read = runIO . BL.readFile >=> parse
 
-modelsFrom :: FilePath -> DecsQ
-modelsFrom = fmap (\i -> map renderModel (T._serviceModels i)
-                      ++ map renderUnion (T._serviceUnions i)
-                      ++ map renderEnum (T._serviceEnums i)
-                  ) . read
+fetch :: String -> Q T.Service
+fetch url =
+  case parseURI url of
+    Nothing -> error "Error parsing apidoc uri"
+    Just uri ->
+      runIO (simpleHTTP $ Request uri GET [] "") >>= \case
+        Left err   -> error $ "Error fetching apidoc spec: " ++ show err
+        Right resp -> case rspCode resp of
+          (2, _, _) -> parse . rspBody $ resp
+          _ -> error $ "Error fetching apidoc spec: " ++ show resp
 
-aesonFrom :: FilePath -> DecsQ
-aesonFrom = undefined
+gen :: T.Service -> DecsQ
+gen T.Service{..}
+  = return $ concat
+      [ map mkData          models
+      , map mkDataFromJSON  models
+      , map mkDataToJSON    models
+      , map mkUnion         unions
+      , map mkUnionFromJSON unions
+      , map mkUnionToJSON   unions
+      , map mkEnum          enums
+      , map mkEnumFromJSON  enums
+      , map mkEnumToJSON    enums
+      ]
+  where
+    models = map model' _serviceModels
+    unions = map union' _serviceUnions
+    enums  = map enum'  _serviceEnums
 
-renderModel :: T.Model -> Dec
-renderModel T.Model{..} = mkData $
-  Data (Nm $ T.unpack _modelName) . flip map _modelFields $
-    \T.Field{..} -> ( Nm $ T.unpack _fieldName
-                    , Ty $ T.unpack _fieldType
-                    , _fieldRequired
-                    )
+apidoc :: FilePath -> DecsQ
+apidoc = read >=> gen
 
-renderUnion :: T.Union -> Dec
-renderUnion T.Union{..} = mkUnion $
-  Union (Nm $ T.unpack _unionName) $
-    map (Ty . T.unpack . T._unionTypeType) _unionTypes
+apidocFromURL :: String -> DecsQ
+apidocFromURL = fetch >=> gen
+  
+model' :: T.Model -> Data
+model' T.Model{..}
+  = Data (Nm $ T.unpack _modelName) . flip map _modelFields $
+      \T.Field{..} -> ( Nm $ T.unpack _fieldName
+                      , Ty $ T.unpack _fieldType
+                      , _fieldRequired
+                      )
 
-renderEnum :: T.Enum -> Dec
-renderEnum T.Enum{..} = mkEnum $
-  Enum (Nm $ T.unpack _enumName)  $
-    map (Nm . T.unpack . T._enumValueName) _enumValues
+union' :: T.Union -> Union
+union' T.Union{..}
+  = Union (Nm $ T.unpack _unionName) $
+      map (Ty . T.unpack . T._unionTypeType) _unionTypes
 
--- test :: IO ()
--- test = do
---   decs <- runQ $ bootstrap "static/apidoc-spec-service.json"
---   print $ ppr decs
--- 
+enum' :: T.Enum -> Enum
+enum' T.Enum{..} 
+  = Enum (Nm $ T.unpack _enumName) $
+      map (Nm . T.unpack . T._enumValueName) _enumValues
+
+--test :: IO ()
+--test = do
+--  decs <- runQ $ bootstrap "http://www.apidoc.me/bryzek/apidoc-generator/0.11.68/service.json"
+--  print $ ppr decs
+

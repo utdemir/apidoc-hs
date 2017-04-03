@@ -24,6 +24,8 @@ dependencies:
   - uuid-types
   - attoparsec
   - lens
+  - HTTP
+  - network-uri
 
 executables:
   apidoc-hs:

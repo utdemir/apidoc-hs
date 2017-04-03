@@ -62,7 +62,7 @@ mkUnion (Union (Nm nm) ts)
 mkDataFromJSON :: Data -> Dec
 mkDataFromJSON (Data (Nm nm) fs)
   = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm))
-      [(ValD (VarP 'parseJSON) (NormalB body) [])]
+      [FunD 'parseJSON [Clause [] (NormalB body) []]]
   where
     body
       = AppE (AppE (VarE 'withObject) (LitE . StringL $ renderType nm)) . LamE [VarP (mkName "obj")] . DoE $
@@ -89,7 +89,7 @@ mkEnumFromJSON (Enum (Nm nm) fs)
           AppE (AppE (AppE (VarE 'maybe) (AppE (VarE 'fail) err)) (VarE 'return)) $
             AppE (AppE (VarE 'lookup) (VarE $ mkName "val")) (ListE $ map tup fs)
 
-    tup (Nm x) = TupE [ AppE (VarE 'T.pack) (LitE . StringL $ renderType x)
+    tup (Nm x) = TupE [ AppE (VarE 'T.pack) (LitE $ StringL x)
                       , ConE . mkName $ renderType nm ++ renderType x
                       ]
     err = AppE (AppE
@@ -103,7 +103,7 @@ mkEnumFromJSON (Enum (Nm nm) fs)
 mkUnionFromJSON :: Union -> Dec
 mkUnionFromJSON (Union (Nm nm) ts)
   = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm))
-      [(ValD (VarP 'parseJSON) (NormalB body) [])]
+      [FunD 'parseJSON [Clause [] (NormalB body) []]]
   where
     body
       = AppE (AppE (VarE 'withObject) (LitE . StringL $ renderType nm)) . LamE [VarP (mkName "obj")] $
@@ -131,13 +131,52 @@ mkUnionFromJSON (Union (Nm nm) ts)
 --------------------------------------------------------------------------------
 
 mkDataToJSON :: Data -> Dec
-mkDataToJSON (Data nm fs) = undefined
+mkDataToJSON (Data (Nm nm) fs)
+  = InstanceD Nothing [] (AppT (ConT ''ToJSON) (ConT . mkName $ renderType nm))
+      [FunD 'toJSON [Clause [VarP $ mkName "val"] (NormalB body) []]]
+  where
+    body
+      = AppE (VarE 'object) $ ListE
+          [ TupE
+              [ AppE (VarE 'T.pack) (LitE $ StringL fnm)
+              , AppE (VarE 'toJSON) (AppE (VarE . mkName $ renderField nm fnm) (VarE $ mkName "val") )
+              ]
+          | (Nm fnm, _, req) <- fs
+          , req
+          ]
 
 mkEnumToJSON :: Enum -> Dec
-mkEnumToJSON = undefined
+mkEnumToJSON (Enum (Nm nm) ts)
+  = InstanceD Nothing [] (AppT (ConT ''ToJSON) (ConT . mkName $ renderType nm))
+      [FunD 'toJSON [Clause [VarP $ mkName "val"] (NormalB body) []]]
+  where
+    body
+      = CaseE (VarE $ mkName "val")
+          [ Match
+              (ConP (mkName $ renderType nm ++ renderType t) [])
+              (NormalB $ AppE (ConE 'String) (AppE (VarE 'T.pack) (LitE . StringL $ t)))
+              []
+          | Nm t <- ts
+          ]
 
 mkUnionToJSON :: Union -> Dec
-mkUnionToJSON = undefined
+mkUnionToJSON (Union (Nm nm) fs)
+  = InstanceD Nothing [] (AppT (ConT ''ToJSON) (ConT . mkName $ renderType nm))
+      [FunD 'toJSON [Clause [VarP $ mkName "val"] (NormalB body) []]]
+  where
+    body
+      = CaseE (VarE $ mkName "val")
+          [ Match
+              (ConP (mkName $ renderType nm ++ renderType ty) [VarP $ mkName "ty"])
+              (NormalB $ AppE (VarE 'object) (ListE [
+                 TupE
+                   [ AppE (VarE 'T.pack) (LitE . StringL $ ty)
+                   , AppE (VarE 'toJSON) (VarE $ mkName "ty")
+                   ]
+              ]))
+              []
+          | Ty ty <- fs
+          ]
 
 --------------------------------------------------------------------------------
 

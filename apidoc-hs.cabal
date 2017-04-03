@@ -31,11 +31,14 @@ executable apidoc-hs
     , uuid-types
     , attoparsec
     , lens
+    , HTTP
+    , network-uri
   other-modules:
       Apidoc.Internal.Bootstrap
       Apidoc.Internal.Bootstrap.TH
       Apidoc.Internal.Bootstrap.Types
-      Apidoc.Internal.Parser
+      Apidoc.Internal.TH
       Apidoc.Internal.TH.Types
       Apidoc.Internal.TH.Utils
+      Apidoc.Types
   default-language: Haskell2010

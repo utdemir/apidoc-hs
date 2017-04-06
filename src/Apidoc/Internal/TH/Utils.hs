@@ -119,7 +119,16 @@ mkUnionFromJSON (Union (Nm nm) ts)
                      , InfixE
                          (Just . ConE . mkName $ renderType nm ++ renderType ty)
                          (VarE ('(<$>)))
-                         (Just $ AppE (VarE 'parseJSON) (VarE (mkName "val")))
+                         (Just $ app 'withObject
+                            [ LitE . StringL $ renderType nm
+                            , LamE [VarP (mkName "val")]
+                                   (InfixE
+                                     (Just . VarE $ mkName "val")
+                                     (VarE '(.:))
+                                     (Just . AppE (VarE 'T.pack) . LitE $ StringL "value"))
+                            , VarE $ mkName "val"
+                            ]
+                         )
                      )
                    | (Ty ty) <- ts
                    ]
@@ -171,7 +180,11 @@ mkUnionToJSON (Union (Nm nm) fs)
               (NormalB $ AppE (VarE 'object) (ListE [
                  TupE
                    [ AppE (VarE 'T.pack) (LitE . StringL $ ty)
-                   , AppE (VarE 'toJSON) (VarE $ mkName "ty")
+                   , AppE (VarE 'object) (ListE [
+                      TupE [ (AppE (VarE 'T.pack) (LitE $ StringL "value"))
+                           , AppE (VarE 'toJSON) (VarE $ mkName "ty")
+                           ]
+                      ])
                    ]
               ]))
               []
@@ -224,3 +237,10 @@ tyToType (Ty ty)
 derivings :: Cxt
 derivings = map ConT [''Show, ''Eq, ''Generic, ''Typeable]
 
+--------------------------------------------------------------------------------
+
+app :: Name -> [Exp] -> Exp
+app funName params = go $ (VarE funName) : params
+  where
+    go (x:[])   = x
+    go (x:y:xs) = go $ (AppE x y):xs

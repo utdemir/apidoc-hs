@@ -45,7 +45,7 @@ read = runIO . BL.readFile >=> parse
 fetch :: String -> Q T.Service
 fetch url =
   case parseURI url of
-    Nothing -> error "Error parsing apidoc uri"
+    Nothing -> error $ "Error parsing apidoc uri: " ++ url
     Just uri ->
       runIO (simpleHTTP $ Request uri GET [] "") >>= \case
         Left err   -> error $ "Error fetching apidoc spec: " ++ show err
@@ -53,6 +53,10 @@ fetch url =
           (2, _, _) -> parse . rspBody $ resp
           _ -> error $ "Error fetching apidoc spec: " ++ show resp
 
+
+-- TODO: Generate lenses
+-- TODO: Generate deprecation warnings
+-- TODO: Generate API definition (probably servant?)
 gen :: T.Service -> DecsQ
 gen T.Service{..}
   = return $ concat
@@ -94,9 +98,4 @@ enum' :: T.Enum -> Enum
 enum' T.Enum{..} 
   = Enum (Nm $ T.unpack _enumName) $
       map (Nm . T.unpack . T._enumValueName) _enumValues
-
---test :: IO ()
---test = do
---  decs <- runQ $ bootstrap "http://www.apidoc.me/bryzek/apidoc-generator/0.11.68/service.json"
---  print $ ppr decs
 

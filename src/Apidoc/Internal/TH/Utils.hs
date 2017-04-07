@@ -81,21 +81,6 @@ mkDataFromJSON (Data (Nm nm) fs)
                | (Nm fnm, _, req) <- fs
                ]
          ]
---            [ BindS (VarP . mkName $ renderField nm fnm)
---                    (InfixE (Just . VarE $ mkName "obj")
---                            (VarE $ if req then '(.:)  else '(.:?))
---                            (Just $ app 'T.pack [LitE . StringL $ fnm]))
---            | (Nm fnm, _, req) <- fs
---            ]
---            ++
---            [ NoBindS $ app 'return
---              [ RecConE (mkName $ renderType nm)
---                  [ (name, VarE name) | (Nm fnm, _, _) <- fs
---                  , let name = mkName $ renderField nm fnm
---                  ]
---              ]
---            ]
---         ]
 
 mkEnumFromJSON :: Enum -> Dec
 mkEnumFromJSON (Enum (Nm nm) fs)
@@ -264,16 +249,17 @@ tyToType (Ty ty)
     customParser :: Parser Type
     customParser = ConT . mkName . renderType . BS8.unpack <$> A.takeWhile (inClass "a-zA-Z0-9_.")
 
+-- TODO: Add `Generic` only when `DeriveGeneric` is enabled
 derivings :: Cxt
 derivings = map ConT [''Show, ''Eq, ''Generic, ''Typeable]
 
 --------------------------------------------------------------------------------
 
--- app f [p1, p2, p3] == [| f p1 p2 p3 |]
+-- | app f [p1, p2, p3] == [| f p1 p2 p3 |]
 app :: Name -> [Exp] -> Exp
 app = foldl' AppE . VarE
 
--- app f [p1, p2, p3] == [| f <$> p1 <*> p2 <*> p3 |]
+-- | idiom f [p1, p2, p3] == [| f <$> p1 <*> p2 <*> p3 |]
 idiom :: Exp -> [Exp] -> Exp
 idiom con []     = con
 idiom con (p:ps) = go (InfixE (Just con) (VarE '(<$>)) (Just p)) ps

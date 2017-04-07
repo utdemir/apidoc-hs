@@ -18,14 +18,14 @@ dependencies:
   - unordered-containers
   - text
   - bytestring
-  - pretty-show
   - template-haskell
   - casing
   - uuid-types
   - attoparsec
-  - lens
   - HTTP
   - network-uri
+  - split
+  - time
 
 executables:
   apidoc-hs:

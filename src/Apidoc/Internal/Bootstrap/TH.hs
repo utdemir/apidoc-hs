@@ -73,5 +73,5 @@ renderEnum T.Enum{..}
 -- test :: IO ()
 -- test = do
 --   decs <- runQ $ bootstrap "static/apidoc-spec-service.json"
---   print $ ppr decs
--- 
+--   print $ print decs
+--

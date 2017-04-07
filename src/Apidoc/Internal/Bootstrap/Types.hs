@@ -9,7 +9,6 @@ import qualified Data.ByteString.Lazy as BL
 import Data.Aeson
 import Data.Map as M
 import Data.Text
-import Text.Show.Pretty
 --------------------------------------------------------------------------------
 
 data UnionType

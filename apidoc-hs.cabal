@@ -1,4 +1,4 @@
--- This file has been generated from package.yaml by hpack version 0.17.0.
+-- This file has been generated from package.yaml by hpack version 0.15.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -25,14 +25,14 @@ executable apidoc-hs
     , unordered-containers
     , text
     , bytestring
-    , pretty-show
     , template-haskell
     , casing
     , uuid-types
     , attoparsec
-    , lens
     , HTTP
     , network-uri
+    , split
+    , time
   other-modules:
       Apidoc.Internal.Bootstrap
       Apidoc.Internal.Bootstrap.TH
@@ -40,5 +40,7 @@ executable apidoc-hs
       Apidoc.Internal.TH
       Apidoc.Internal.TH.Types
       Apidoc.Internal.TH.Utils
+      Apidoc.Internal.Types
+      Apidoc.TH
       Apidoc.Types
   default-language: Haskell2010

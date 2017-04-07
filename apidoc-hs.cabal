@@ -19,7 +19,7 @@ library
   other-modules:
       Apidoc.Internal.TH
       Apidoc.Internal.Types
-      Apidoc.Internal.TH.Utils
+      Apidoc.Internal.TH.Gen
       Apidoc.Internal.TH.Types
       Apidoc.Internal.Bootstrap
       Apidoc.Internal.Bootstrap.TH

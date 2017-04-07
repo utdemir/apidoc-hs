@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Apidoc.Internal.TH.Utils where
+module Apidoc.Internal.TH.Gen where
 
 --------------------------------------------------------------------------------
 import Control.Lens.Lens

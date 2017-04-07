@@ -29,7 +29,7 @@ import Network.HTTP
 import Network.URI
 --------------------------------------------------------------------------------
 import qualified Apidoc.Internal.Bootstrap as T
-import Apidoc.Internal.TH.Utils
+import Apidoc.Internal.TH.Gen
 import Apidoc.Internal.TH.Types
 --------------------------------------------------------------------------------
 

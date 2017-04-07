@@ -27,7 +27,7 @@ import GHC.Generics (Generic)
 import Data.Typeable
 --------------------------------------------------------------------------------
 import qualified Apidoc.Internal.Bootstrap.Types as T
-import Apidoc.Internal.TH.Utils
+import Apidoc.Internal.TH.Gen
 import Apidoc.Internal.TH.Types
 --------------------------------------------------------------------------------
 

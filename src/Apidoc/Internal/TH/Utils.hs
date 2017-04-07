@@ -5,6 +5,7 @@
 module Apidoc.Internal.TH.Utils where
 
 --------------------------------------------------------------------------------
+import Control.Lens.Lens
 import           Control.Applicative
 import           Data.Aeson
 import qualified Data.HashMap.Strict as HM
@@ -36,13 +37,10 @@ mkData (Data (Nm nm) fs)
   = DataD [] name [] Nothing [RecC name fields] derivings
   where
     name = mkName $ renderType nm
-    fields = flip map fs $ \(Nm fnm, ty, tyRequired) ->
+    fields = flip map fs $ \(Nm fnm, ty, isReq) ->
       ( mkName $ renderField nm fnm
       , Bang NoSourceUnpackedness NoSourceStrictness
-      , let type_ = tyToType ty
-        in  if tyRequired
-              then type_
-              else AppT (ConT ''Maybe) type_
+      , tyToTypeReq ty isReq
       )
 
 
@@ -208,6 +206,27 @@ mkUnionToJSON (Union (Nm nm) fs)
 
 --------------------------------------------------------------------------------
 
+mkDataLens :: Data -> [Dec]
+mkDataLens (Data (Nm nm) fs)
+  = concat
+    $ [ [ SigD lensName sig
+        , ValD (VarP lensName) (NormalB body) []
+        ]
+      | (Nm fnm, ty, isReq) <- fs
+      , let lensName = mkName . drop 1 $ renderField nm fnm
+      , let sig = appType ''Lens' [ ConT . mkName $ renderType nm
+                                  , tyToTypeReq ty isReq
+                                  ]
+      , let body = app 'lens
+              [ VarE . mkName $ renderField nm fnm
+              , LamE [ VarP $ mkName "s", VarP $ mkName "a" ] $
+                  RecUpdE (VarE $ mkName "s")
+                   [ (mkName $ renderField nm fnm, VarE $ mkName "a") ]
+              ]
+      ]
+
+--------------------------------------------------------------------------------
+
 renderType :: String -> String
 renderType = pascal . last . splitOn "."
 
@@ -216,6 +235,10 @@ renderField modelName fieldName
   = "_" ++ camel (renderType modelName) ++ pascal fieldName
 
 --------------------------------------------------------------------------------
+
+tyToTypeReq :: Ty -> Bool -> Type
+tyToTypeReq ty req
+  = (if req then id else (AppT (ConT ''Maybe))) $ tyToType ty
 
 tyToType :: Ty -> Type
 tyToType (Ty ty)
@@ -249,7 +272,7 @@ tyToType (Ty ty)
     customParser :: Parser Type
     customParser = ConT . mkName . renderType . BS8.unpack <$> A.takeWhile (inClass "a-zA-Z0-9_.")
 
--- TODO: Add `Generic` only when `DeriveGeneric` is enabled
+-- FIXME: Add `Generic` only when `DeriveGeneric` is enabled
 derivings :: Cxt
 derivings = map ConT [''Show, ''Eq, ''Generic, ''Typeable]
 
@@ -258,6 +281,10 @@ derivings = map ConT [''Show, ''Eq, ''Generic, ''Typeable]
 -- | app f [p1, p2, p3] == [| f p1 p2 p3 |]
 app :: Name -> [Exp] -> Exp
 app = foldl' AppE . VarE
+
+appType :: Name -> [Type] -> Type
+appType = foldl' AppT . ConT
+
 
 -- | idiom f [p1, p2, p3] == [| f <$> p1 <*> p2 <*> p3 |]
 idiom :: Exp -> [Exp] -> Exp

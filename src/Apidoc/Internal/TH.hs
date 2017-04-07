@@ -42,6 +42,7 @@ parse json
 read :: FilePath -> Q T.Service
 read = runIO . BL.readFile >=> parse
 
+-- TODO: Recursively fetch dependencies
 fetch :: String -> Q T.Service
 fetch url =
   case parseURI url of
@@ -53,14 +54,12 @@ fetch url =
           (2, _, _) -> parse . rspBody $ resp
           _ -> error $ "Error fetching apidoc spec: " ++ show resp
 
-
--- TODO: Generate lenses
 -- TODO: Generate deprecation warnings
 -- TODO: Generate API definition (probably servant?)
 gen :: T.Service -> DecsQ
 gen T.Service{..}
   = return $ concat
-      [ map mkData          models
+      [ models >>= (\m -> mkData m : mkDataLens m)
       , map mkDataFromJSON  models
       , map mkDataToJSON    models
       , map mkUnion         unions

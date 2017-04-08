@@ -40,15 +40,15 @@ bootstrap serviceSpec = do
 
 bootstrap' :: T.Service -> DecsQ
 bootstrap' service
-  = return . concat . concat $
-      [ map renderModel (T.serviceModels service)
-      , map renderUnion (T.serviceUnions service)
-      , map renderEnum  (T.serviceEnums service)
+  = fmap (concat . concat) . sequence $
+      [ mapM renderModel (T.serviceModels service)
+      , mapM renderUnion (T.serviceUnions service)
+      , mapM renderEnum  (T.serviceEnums service)
       ]
 
-renderModel :: T.Model -> [Dec]
+renderModel :: T.Model -> DecsQ
 renderModel T.Model{..}
-  = [ mkData d, mkDataFromJSON d ]
+  = sequence [ mkData d, mkDataFromJSON d ]
   where
     d = Data (Nm $ T.unpack modelName) . flip map modelFields
           $ \T.ModelField{..} -> ( Nm $ T.unpack modelFieldName
@@ -56,16 +56,16 @@ renderModel T.Model{..}
                                  , modelFieldRequired
                                  )
 
-renderUnion :: T.Union -> [Dec]
+renderUnion :: T.Union -> DecsQ
 renderUnion T.Union{..}
-  = [ mkUnion u, mkUnionFromJSON u ]
+  = sequence [ mkUnion u, mkUnionFromJSON u ]
   where
     u = Union (Nm $ T.unpack unionName) 
           $ map (Ty . T.unpack . T.unionTypeType) unionTypes
 
-renderEnum :: T.Enum -> [Dec]
+renderEnum :: T.Enum -> DecsQ
 renderEnum T.Enum{..}
-  = [ mkEnum e, mkEnumFromJSON e ]
+  = sequence [ mkEnum e, mkEnumFromJSON e ]
   where
     e = Enum (Nm $ T.unpack enumName) 
           $ map (Nm . T.unpack . T.enumValueName) enumValues

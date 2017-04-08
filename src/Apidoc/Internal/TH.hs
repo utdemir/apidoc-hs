@@ -58,16 +58,11 @@ fetch url =
 -- TODO: Generate API definition (probably servant?)
 gen :: T.Service -> DecsQ
 gen T.Service{..}
-  = return $ concat
-      [ models >>= (\m -> mkData m : mkDataLens m)
-      , map mkDataFromJSON  models
-      , map mkDataToJSON    models
-      , map mkUnion         unions
-      , map mkUnionFromJSON unions
-      , map mkUnionToJSON   unions
-      , map mkEnum          enums
-      , map mkEnumFromJSON  enums
-      , map mkEnumToJSON    enums
+  = fmap (concat . concat) . sequence $
+      [ forM models $ \m ->
+          (++) <$> sequence [ mkData m, mkDataToJSON m, mkDataFromJSON m ] <*> mkDataLens m
+      , forM unions $ sequence . flip map [ mkUnion, mkUnionToJSON, mkUnionFromJSON ] . (flip ($))
+      , forM enums  $ sequence . flip map [ mkEnum , mkEnumToJSON , mkEnumFromJSON  ] . (flip ($))
       ]
   where
     models = map model' _serviceModels

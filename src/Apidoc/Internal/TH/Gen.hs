@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
@@ -9,7 +10,7 @@ import Control.Lens.Lens
 import           Control.Applicative
 import           Data.Aeson
 import qualified Data.HashMap.Strict as HM
-import           Data.Attoparsec.ByteString as A
+import           Data.Attoparsec.ByteString as A hiding (match)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Char8      as BS8
 import Data.List
@@ -32,169 +33,171 @@ import Apidoc.Internal.Types
 import           Apidoc.Internal.TH.Types
 --------------------------------------------------------------------------------
 
-mkData :: Data -> Dec
+mkData :: Data -> DecQ
 mkData (Data (Nm nm) fs)
-  = DataD [] name [] Nothing [RecC name fields] derivings
+  = dataD (return []) name [] Nothing [recC name fields] derivings
   where
     name = mkName $ renderType nm
-    fields = flip map fs $ \(Nm fnm, ty, isReq) ->
+    fields = flip map fs $ \(Nm fnm, ty, isReq) -> return
       ( mkName $ renderField nm fnm
       , Bang NoSourceUnpackedness NoSourceStrictness
       , tyToTypeReq ty isReq
       )
 
 
-mkEnum :: Enum -> Dec
+mkEnum :: Enum -> DecQ
 mkEnum (Enum (Nm nm) fs)
-  = DataD [] (mkName $ renderType nm) [] Nothing (map mk fs) derivings
+  = dataD (return []) (mkName $ renderType nm) [] Nothing (map mk fs) derivings
   where
-    mk (Nm fnm) = RecC (mkName $ renderType nm ++ renderType fnm) []
+    mk (Nm fnm) = recC (mkName $ renderType nm ++ renderType fnm) []
 
-mkUnion :: Union -> Dec
+mkUnion :: Union -> DecQ
 mkUnion (Union (Nm nm) ts)
-  = DataD [] (mkName $ renderType nm) [] Nothing (map mk ts) derivings
+  = dataD (return []) (mkName $ renderType nm) [] Nothing (map mk ts) derivings
   where
-    mk ty@(Ty fnm) = RecC (mkName $ renderType nm ++ renderType fnm) [
-      ( mkName $ renderField nm fnm
-      , Bang NoSourceUnpackedness NoSourceStrictness
-      , tyToType ty
-      )]
+    mk ty@(Ty fnm) = recC (mkName $ renderType nm ++ renderType fnm) [
+      return ( mkName $ renderField nm fnm
+             , Bang NoSourceUnpackedness NoSourceStrictness
+             , tyToType ty
+             )
+      ]
 
 --------------------------------------------------------------------------------
 
-mkDataFromJSON :: Data -> Dec
+mkDataFromJSON :: Data -> DecQ
 mkDataFromJSON (Data (Nm nm) fs)
-  = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm))
-      [FunD 'parseJSON [Clause [] (NormalB body) []]]
+  = instanceD (return []) (appT (conT ''FromJSON) (conT . mkName $ renderType nm))
+      [funD 'parseJSON [clause [] (normalB body) []]]
   where
     body
-      = app 'withObject
-         [ LitE . StringL $ renderType nm
-         , LamE [VarP (mkName "obj")] $
-             idiom (ConE . mkName $ renderType nm)
-               [ (InfixE
-                    (Just . VarE $ mkName "obj")
-                    (VarE $ if req then '(.:)  else '(.:?))
-                    (Just $ app 'T.pack [LitE . StringL $ fnm]))
+      = appQ 'withObject
+         [ litE . StringL $ renderType nm
+         , lamE [varP $ mkName "obj"] $
+             idiom (conE . mkName $ renderType nm)
+               [ (infixE
+                    (Just . varE $ mkName "obj")
+                    (varE $ if req then '(.:)  else '(.:?))
+                    (Just $ appQ 'T.pack [litE . StringL $ fnm]))
                | (Nm fnm, _, req) <- fs
                ]
          ]
 
-mkEnumFromJSON :: Enum -> Dec
+mkEnumFromJSON :: Enum -> DecQ
 mkEnumFromJSON (Enum (Nm nm) fs)
-  = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm))
-      [(ValD (VarP 'parseJSON) (NormalB body) [])]
+  = instanceD (return []) (appT (conT ''FromJSON) (conT . mkName $ renderType nm))
+      [(valD (varP 'parseJSON) (normalB body) [])]
   where
     body
-      = app 'withText
-         [ LitE $ StringL (renderType nm)
-         , LamE [VarP $ mkName "val"] $
-             app 'maybe
-               [ app 'fail [err]
-               , VarE 'return
-               , app 'lookup [VarE $ mkName "val", ListE $ map tup fs]
+      = appQ 'withText
+         [ litE $ StringL (renderType nm)
+         , lamE [varP $ mkName "val"] $
+             appQ 'maybe
+               [ appQ 'fail [err]
+               , varE 'return
+               , appQ 'lookup [varE $ mkName "val", listE $ map tup fs]
                ]
          ]
 
-    tup (Nm x) = TupE [ AppE (VarE 'T.pack) (LitE $ StringL x)
-                      , ConE . mkName $ renderType nm ++ renderType x
+    tup (Nm x) = tupE [ appE (varE 'T.pack) (litE $ StringL x)
+                      , conE . mkName $ renderType nm ++ renderType x
                       ]
 
-    err = app 'concat
-      [ ListE
-          [ LitE $ StringL "Error parsing "
-          , app 'T.unpack [VarE $ mkName "val"]
-          , LitE . StringL $ ": not a valid " ++ renderType nm
+    err = appQ 'concat
+      [ listE
+          [ litE $ StringL "Error parsing "
+          , appQ 'T.unpack [varE $ mkName "val"]
+          , litE . StringL $ ": not a valid " ++ renderType nm
           ]
       ]
 
-mkUnionFromJSON :: Union -> Dec
+mkUnionFromJSON :: Union -> DecQ
 mkUnionFromJSON (Union (Nm nm) ts)
-  = InstanceD Nothing [] (AppT (ConT ''FromJSON) (ConT . mkName $ renderType nm))
-      [FunD 'parseJSON [Clause [] (NormalB body) []]]
+  = instanceD (return []) (appT (conT ''FromJSON) (conT . mkName $ renderType nm))
+      [funD 'parseJSON [clause [] (normalB body) []]]
   where
     body
-      = app 'withObject
-          [ LitE . StringL $ renderType nm
-          , LamE [VarP (mkName "obj")] $
-              CaseE (app 'HM.toList [VarE $ mkName "obj"])
-                [ Match
-                    (ListP [TupP [VarP (mkName "tag"), VarP (mkName "val")]])
-                    (GuardedB
-                       [ ( NormalG (
-                             InfixE
-                               (Just . VarE $ mkName "tag")
-                               (VarE '(==))
-                               (Just . AppE (VarE 'T.pack) . LitE . StringL $ ty))
-                         , InfixE
-                             (Just . ConE . mkName $ renderType nm ++ renderType ty)
-                             (VarE ('(<$>)))
-                             (Just $ app 'withObject
-                                [ LitE . StringL $ renderType nm
-                                , LamE [VarP (mkName "val")]
-                                       (InfixE
-                                         (Just . VarE $ mkName "val")
-                                         (VarE '(.:))
-                                         (Just $ app 'T.pack [LitE $ StringL "value"]))
-                                , VarE $ mkName "val"
-                                ]
-                             )
-                         )
+      = appQ 'withObject
+          [ litE . StringL $ renderType nm
+          , lamE [varP (mkName "obj")] $
+              caseE (appQ 'HM.toList [varE $ mkName "obj"])
+                [ match
+                    (listP [tupP [varP (mkName "tag"), varP (mkName "val")]])
+                    (guardedB
+                       [ return
+                           ( NormalG (
+                               InfixE
+                                 (Just . VarE $ mkName "tag")
+                                 (VarE '(==))
+                                 (Just . AppE (VarE 'T.pack) . LitE . StringL $ ty))
+                           , InfixE
+                               (Just . ConE . mkName $ renderType nm ++ renderType ty)
+                               (VarE ('(<$>)))
+                               (Just $ app 'withObject
+                                  [ LitE . StringL $ renderType nm
+                                  , LamE [VarP (mkName "val")]
+                                         (InfixE
+                                           (Just . VarE $ mkName "val")
+                                           (VarE '(.:))
+                                           (Just $ app 'T.pack [LitE $ StringL "value"]))
+                                  , VarE $ mkName "val"
+                                  ]
+                               )
+                           )
                        | (Ty ty) <- ts
                        ]
                     )
                     []
-                , Match WildP (NormalB $ app 'fail [LitE . StringL $ "invalid union"]) []
+                , match (return WildP) (normalB $ appQ 'fail [litE . StringL $ "invalid union"]) []
                 ]
           ]
 
 --------------------------------------------------------------------------------
 
-mkDataToJSON :: Data -> Dec
+mkDataToJSON :: Data -> DecQ
 mkDataToJSON (Data (Nm nm) fs)
-  = InstanceD Nothing [] (AppT (ConT ''ToJSON) (ConT . mkName $ renderType nm))
-      [FunD 'toJSON [Clause [VarP $ mkName "val"] (NormalB body) []]]
+  = instanceD (return []) (appT (conT ''ToJSON) (conT . mkName $ renderType nm))
+      [funD 'toJSON [clause [varP $ mkName "val"] (normalB body) []]]
   where
     body
-      = AppE (VarE 'object) $ ListE
-          [ TupE
-              [ app 'T.pack [LitE $ StringL fnm]
-              , app 'toJSON [app (mkName $ renderField nm fnm) [VarE $ mkName "val"]]
+      = appE (varE 'object) $ listE
+          [ tupE
+              [ appQ 'T.pack [litE $ StringL fnm]
+              , appQ 'toJSON [appQ (mkName $ renderField nm fnm) [varE $ mkName "val"]]
               ]
           | (Nm fnm, _, req) <- fs
           , req
           ]
 
-mkEnumToJSON :: Enum -> Dec
+mkEnumToJSON :: Enum -> DecQ
 mkEnumToJSON (Enum (Nm nm) ts)
-  = InstanceD Nothing [] (AppT (ConT ''ToJSON) (ConT . mkName $ renderType nm))
-      [FunD 'toJSON [Clause [VarP $ mkName "val"] (NormalB body) []]]
+  = instanceD (return []) (appT (conT ''ToJSON) (conT . mkName $ renderType nm))
+      [funD 'toJSON [clause [varP $ mkName "val"] (normalB body) []]]
   where
     body
-      = CaseE (VarE $ mkName "val")
-          [ Match
-              (ConP (mkName $ renderType nm ++ renderType t) [])
-              (NormalB $ AppE (ConE 'String) (app 'T.pack [LitE $ StringL t]))
+      = caseE (varE $ mkName "val")
+          [ match
+              (conP (mkName $ renderType nm ++ renderType t) [])
+              (normalB $ appE (conE 'String) (appQ 'T.pack [litE $ StringL t]))
               []
           | Nm t <- ts
           ]
 
-mkUnionToJSON :: Union -> Dec
+mkUnionToJSON :: Union -> DecQ
 mkUnionToJSON (Union (Nm nm) fs)
-  = InstanceD Nothing [] (AppT (ConT ''ToJSON) (ConT . mkName $ renderType nm))
-      [FunD 'toJSON [Clause [VarP $ mkName "val"] (NormalB body) []]]
+  = instanceD (return []) (appT (conT ''ToJSON) (conT . mkName $ renderType nm))
+      [funD 'toJSON [clause [varP $ mkName "val"] (normalB body) []]]
   where
     body
-      = CaseE (VarE $ mkName "val")
-          [ Match
-              (ConP (mkName $ renderType nm ++ renderType ty) [VarP $ mkName "ty"])
-              (NormalB $ AppE (VarE 'object) (ListE [
-                 TupE
-                   [ app 'T.pack [LitE . StringL $ ty]
-                   , app 'object
-                       [ ListE
-                         [ TupE [ AppE (VarE 'T.pack) (LitE $ StringL "value")
-                                , AppE (VarE 'toJSON) (VarE $ mkName "ty")
+      = caseE (varE $ mkName "val")
+          [ match
+              (conP (mkName $ renderType nm ++ renderType ty) [varP $ mkName "ty"])
+              (normalB $ appE (varE 'object) (listE [
+                 tupE
+                   [ appQ 'T.pack [litE . StringL $ ty]
+                   , appQ 'object
+                       [ listE
+                         [ tupE [ appE (varE 'T.pack) (litE $ StringL "value")
+                                , appE (varE 'toJSON) (varE $ mkName "ty")
                                 ]
                          ]
                        ]
@@ -206,22 +209,22 @@ mkUnionToJSON (Union (Nm nm) fs)
 
 --------------------------------------------------------------------------------
 
-mkDataLens :: Data -> [Dec]
+mkDataLens :: Data -> DecsQ
 mkDataLens (Data (Nm nm) fs)
-  = concat
-    $ [ [ SigD lensName sig
-        , ValD (VarP lensName) (NormalB body) []
+  = sequence . concat $
+      [ [ sigD lensName sig
+        , valD (varP lensName) (normalB body) []
         ]
       | (Nm fnm, ty, isReq) <- fs
       , let lensName = mkName . drop 1 $ renderField nm fnm
-      , let sig = appType ''Lens' [ ConT . mkName $ renderType nm
-                                  , tyToTypeReq ty isReq
-                                  ]
-      , let body = app 'lens
-              [ VarE . mkName $ renderField nm fnm
-              , LamE [ VarP $ mkName "s", VarP $ mkName "a" ] $
-                  RecUpdE (VarE $ mkName "s")
-                   [ (mkName $ renderField nm fnm, VarE $ mkName "a") ]
+      , let sig = appTypeQ ''Lens' [ conT . mkName $ renderType nm
+                                   , return $ tyToTypeReq ty isReq
+                                   ]
+      , let body = appQ 'lens
+              [ varE . mkName $ renderField nm fnm
+              , lamE [ varP $ mkName "s", varP $ mkName "a" ] $
+                  recUpdE (varE $ mkName "s")
+                   [ return (mkName $ renderField nm fnm, VarE $ mkName "a") ]
               ]
       ]
 
@@ -272,9 +275,12 @@ tyToType (Ty ty)
     customParser :: Parser Type
     customParser = ConT . mkName . renderType . BS8.unpack <$> A.takeWhile (inClass "a-zA-Z0-9_.")
 
--- FIXME: Add `Generic` only when `DeriveGeneric` is enabled
-derivings :: Cxt
-derivings = map ConT [''Show, ''Eq, ''Generic, ''Typeable]
+derivings :: CxtQ
+derivings
+  = let defaultExts = map ConT [''Show, ''Eq, ''Typeable]
+    in  isExtEnabled DeriveGeneric >>= return . \case
+          True  -> ConT ''Generic : defaultExts
+          False -> defaultExts
 
 --------------------------------------------------------------------------------
 
@@ -282,14 +288,20 @@ derivings = map ConT [''Show, ''Eq, ''Generic, ''Typeable]
 app :: Name -> [Exp] -> Exp
 app = foldl' AppE . VarE
 
+appQ :: Name -> [ExpQ] -> ExpQ
+appQ = foldl' appE . return . VarE
+
 appType :: Name -> [Type] -> Type
 appType = foldl' AppT . ConT
 
+appTypeQ :: Name -> [TypeQ] -> TypeQ
+appTypeQ = foldl' appT . return . ConT
+
 
 -- | idiom f [p1, p2, p3] == [| f <$> p1 <*> p2 <*> p3 |]
-idiom :: Exp -> [Exp] -> Exp
+idiom :: Q Exp -> [Q Exp] -> Q Exp
 idiom con []     = con
-idiom con (p:ps) = go (InfixE (Just con) (VarE '(<$>)) (Just p)) ps
+idiom con (p:ps) = go (infixE (Just con) (varE '(<$>)) (Just p)) ps
   where
     go p []     = p
-    go p (x:xs) = go (InfixE (Just p) (VarE '(<*>)) (Just x)) xs
+    go p (x:xs) = go (infixE (Just p) (varE '(<*>)) (Just x)) xs

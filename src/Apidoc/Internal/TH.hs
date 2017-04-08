@@ -1,46 +1,33 @@
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 module Apidoc.Internal.TH where
 
 --------------------------------------------------------------------------------
-import Prelude hiding (Enum, read)
-import Data.Ratio
-import Text.Casing
-import Data.Monoid
-import qualified Data.ByteString.Lazy as BL
-import Language.Haskell.TH
+import           Control.Applicative
+import           Control.Monad
+import           Data.Aeson                (eitherDecode)
+import qualified Data.ByteString.Lazy      as BL
+import qualified Data.Text                 as T
+import           Language.Haskell.TH
+import           Network.HTTP
+import           Network.URI (parseURI)
+import           Prelude                   hiding (Enum, read)
 import Language.Haskell.TH.Syntax
-import Data.Aeson
-import qualified Data.Text as T
-import Data.Int
-import Data.UUID.Types (UUID)
-import Control.Applicative
-import Data.Functor
-import Debug.Trace
-import Data.Map (Map)
-import Control.Monad
-import GHC.Generics (Generic)
-import Data.Typeable
-import Network.HTTP
-import Network.URI
 --------------------------------------------------------------------------------
 import qualified Apidoc.Internal.Bootstrap as T
-import Apidoc.Internal.TH.Gen
-import Apidoc.Internal.TH.Types
+import           Apidoc.Internal.TH.Gen
+import           Apidoc.Internal.TH.Types
 --------------------------------------------------------------------------------
 
 parse :: BL.ByteString -> Q T.Service
-parse json 
-  = case eitherDecode json of
+parse json = case eitherDecode json of
       Left err  -> error $ "Parse error on apidoc spec: " ++ err
       Right api -> return api
 
 read :: FilePath -> Q T.Service
-read = runIO . BL.readFile >=> parse
+read path = addDependentFile path >> runIO (BL.readFile path) >>= parse
 
 -- TODO: Recursively fetch dependencies
 fetch :: String -> Q T.Service
@@ -52,7 +39,7 @@ fetch url =
         Left err   -> error $ "Error fetching apidoc spec: " ++ show err
         Right resp -> case rspCode resp of
           (2, _, _) -> parse . rspBody $ resp
-          _ -> error $ "Error fetching apidoc spec: " ++ show resp
+          _         -> error $ "Error fetching apidoc spec: " ++ show resp
 
 -- TODO: Generate deprecation warnings
 -- TODO: Generate API definition (probably servant?)
@@ -74,7 +61,7 @@ apidoc = read >=> gen
 
 apidocFromURL :: String -> DecsQ
 apidocFromURL = fetch >=> gen
-  
+
 model' :: T.Model -> Data
 model' T.Model{..}
   = Data (Nm $ T.unpack _modelName) . flip map _modelFields $
@@ -89,7 +76,7 @@ union' T.Union{..}
       map (Ty . T.unpack . T._unionTypeType) _unionTypes
 
 enum' :: T.Enum -> Enum
-enum' T.Enum{..} 
+enum' T.Enum{..}
   = Enum (Nm $ T.unpack _enumName) $
       map (Nm . T.unpack . T._enumValueName) _enumValues
 

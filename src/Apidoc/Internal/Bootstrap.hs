@@ -1,15 +1,12 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric    #-}
+{-# LANGUAGE TemplateHaskell  #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE DeriveGeneric #-}
 
 module Apidoc.Internal.Bootstrap where
 
 --------------------------------------------------------------------------------
-import Prelude hiding (Enum)
-import Apidoc.Internal.Bootstrap.TH (bootstrap)
-import qualified Data.ByteString.Lazy as BL
-import Data.Aeson
+import           Apidoc.Internal.Bootstrap.TH (bootstrap)
+import           Prelude                      hiding (Enum)
 --------------------------------------------------------------------------------
 
 bootstrap "static/apidoc-spec-service.json"
-

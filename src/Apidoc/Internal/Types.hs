@@ -1,15 +1,12 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Apidoc.Internal.Types where
 
 --------------------------------------------------------------------------------
-import GHC.Generics
-import Data.UUID.Types (UUID)
+import           Data.Aeson
+import qualified Data.Text       as T
+import           Data.UUID.Types (UUID)
 import qualified Data.UUID.Types as UUID
-import Data.Time.Clock
-import Data.Aeson
-import Data.Time.Calendar
-import qualified Data.Text as T
 --------------------------------------------------------------------------------
 
 instance FromJSON UUID where

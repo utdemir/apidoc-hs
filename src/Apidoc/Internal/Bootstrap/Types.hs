@@ -1,14 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeApplications  #-}
 
 module Apidoc.Internal.Bootstrap.Types where
 
 --------------------------------------------------------------------------------
-import Prelude hiding (Enum)
-import qualified Data.ByteString.Lazy as BL
-import Data.Aeson
-import Data.Map as M
-import Data.Text
+import           Data.Aeson
+import           Data.Text
+import           Prelude    hiding (Enum)
 --------------------------------------------------------------------------------
 
 data UnionType
@@ -95,7 +93,7 @@ data Service
       { serviceEnums  :: [Enum]
       , serviceUnions :: [Union]
       , serviceModels :: [Model]
-      }  
+      }
   deriving (Show, Eq, Ord)
 
 instance FromJSON Service where

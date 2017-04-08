@@ -1,8 +1,7 @@
 module Apidoc.Internal.TH.Types where
 
 --------------------------------------------------------------------------------
-import Prelude hiding (Enum)
-import Language.Haskell.TH
+import           Prelude hiding (Enum)
 --------------------------------------------------------------------------------
 
 newtype Ty = Ty String

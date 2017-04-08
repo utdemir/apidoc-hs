@@ -1,35 +1,31 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
 module Apidoc.Internal.TH.Gen where
 
 --------------------------------------------------------------------------------
-import Control.Lens.Lens
 import           Control.Applicative
+import           Control.Lens.Lens
 import           Data.Aeson
-import qualified Data.HashMap.Strict as HM
-import           Data.Attoparsec.ByteString as A hiding (match)
-import qualified Data.ByteString            as BS
-import qualified Data.ByteString.Char8      as BS8
-import Data.List
+import           Data.Attoparsec.Text     as A hiding (match)
 import           Data.Functor
+import qualified Data.HashMap.Strict      as HM
 import           Data.Int
-import           Data.Map                   (Map)
+import           Data.List
+import           Data.List.Split          (splitOn)
+import           Data.Map                 (Map)
 import           Data.Maybe
-import qualified Data.Text                  as T
-import           Data.Typeable              (Typeable)
-import           Data.UUID.Types            (UUID)
-import           GHC.Generics               (Generic)
+import qualified Data.Text                as T
+import           Data.Time.Calendar       (Day)
+import           Data.Time.Clock          (UTCTime)
+import           Data.Typeable            (Typeable)
+import           GHC.Generics             (Generic)
 import           Language.Haskell.TH
-import           Prelude                    hiding (Enum)
+import           Prelude                  hiding (Enum)
 import           Text.Casing
-import Data.List.Split (splitOn)
-import Data.Time.Calendar (Day)
-import Data.Time.Clock (UTCTime)
 --------------------------------------------------------------------------------
-import Apidoc.Internal.Types
 import           Apidoc.Internal.TH.Types
 --------------------------------------------------------------------------------
 
@@ -70,14 +66,14 @@ mkDataFromJSON (Data (Nm nm) fs)
       [funD 'parseJSON [clause [] (normalB body) []]]
   where
     body
-      = appQ 'withObject
+      = app 'withObject
          [ litE . StringL $ renderType nm
          , lamE [varP $ mkName "obj"] $
              idiom (conE . mkName $ renderType nm)
                [ (infixE
                     (Just . varE $ mkName "obj")
                     (varE $ if req then '(.:)  else '(.:?))
-                    (Just $ appQ 'T.pack [litE . StringL $ fnm]))
+                    (Just $ app 'T.pack [litE . StringL $ fnm]))
                | (Nm fnm, _, req) <- fs
                ]
          ]
@@ -88,13 +84,13 @@ mkEnumFromJSON (Enum (Nm nm) fs)
       [(valD (varP 'parseJSON) (normalB body) [])]
   where
     body
-      = appQ 'withText
+      = app 'withText
          [ litE $ StringL (renderType nm)
          , lamE [varP $ mkName "val"] $
-             appQ 'maybe
-               [ appQ 'fail [err]
+             app 'maybe
+               [ app 'fail [err]
                , varE 'return
-               , appQ 'lookup [varE $ mkName "val", listE $ map tup fs]
+               , app 'lookup [varE $ mkName "val", listE $ map tup fs]
                ]
          ]
 
@@ -102,10 +98,10 @@ mkEnumFromJSON (Enum (Nm nm) fs)
                       , conE . mkName $ renderType nm ++ renderType x
                       ]
 
-    err = appQ 'concat
+    err = app 'concat
       [ listE
           [ litE $ StringL "Error parsing "
-          , appQ 'T.unpack [varE $ mkName "val"]
+          , app 'T.unpack [varE $ mkName "val"]
           , litE . StringL $ ": not a valid " ++ renderType nm
           ]
       ]
@@ -116,38 +112,36 @@ mkUnionFromJSON (Union (Nm nm) ts)
       [funD 'parseJSON [clause [] (normalB body) []]]
   where
     body
-      = appQ 'withObject
+      = app 'withObject
           [ litE . StringL $ renderType nm
           , lamE [varP (mkName "obj")] $
-              caseE (appQ 'HM.toList [varE $ mkName "obj"])
+              caseE (app 'HM.toList [varE $ mkName "obj"])
                 [ match
                     (listP [tupP [varP (mkName "tag"), varP (mkName "val")]])
                     (guardedB
-                       [ return
-                           ( NormalG (
-                               InfixE
-                                 (Just . VarE $ mkName "tag")
-                                 (VarE '(==))
-                                 (Just . AppE (VarE 'T.pack) . LitE . StringL $ ty))
-                           , InfixE
-                               (Just . ConE . mkName $ renderType nm ++ renderType ty)
-                               (VarE ('(<$>)))
-                               (Just $ app 'withObject
-                                  [ LitE . StringL $ renderType nm
-                                  , LamE [VarP (mkName "val")]
-                                         (InfixE
-                                           (Just . VarE $ mkName "val")
-                                           (VarE '(.:))
-                                           (Just $ app 'T.pack [LitE $ StringL "value"]))
-                                  , VarE $ mkName "val"
-                                  ]
-                               )
-                           )
+                       [ (,) <$> normalG (
+                                   infixE
+                                     (Just . varE $ mkName "tag")
+                                     (varE '(==))
+                                     (Just . appE (varE 'T.pack) . litE . StringL $ ty))
+                             <*> infixE
+                                   (Just . conE . mkName $ renderType nm ++ renderType ty)
+                                   (varE ('(<$>)))
+                                   (Just $ app 'withObject
+                                      [ litE . StringL $ renderType nm
+                                      , lamE [varP (mkName "obj'")]
+                                             (infixE
+                                               (Just . varE $ mkName "obj'")
+                                               (varE '(.:))
+                                               (Just $ app 'T.pack [litE $ StringL "value"]))
+                                      , varE $ mkName "val"
+                                      ]
+                                   )
                        | (Ty ty) <- ts
                        ]
                     )
                     []
-                , match (return WildP) (normalB $ appQ 'fail [litE . StringL $ "invalid union"]) []
+                , match (return WildP) (normalB $ app 'fail [litE . StringL $ "invalid union"]) []
                 ]
           ]
 
@@ -159,13 +153,17 @@ mkDataToJSON (Data (Nm nm) fs)
       [funD 'toJSON [clause [varP $ mkName "val"] (normalB body) []]]
   where
     body
-      = appE (varE 'object) $ listE
-          [ tupE
-              [ appQ 'T.pack [litE $ StringL fnm]
-              , appQ 'toJSON [appQ (mkName $ renderField nm fnm) [varE $ mkName "val"]]
-              ]
+      = appE (varE 'object) . appE (varE 'catMaybes) $ listE
+          [ if req
+              then appE (conE 'Just) $ tup "val"
+              else app 'fmap
+                     [ lamE [varP $ mkName "inner"] $ tup "inner"
+                     , app (mkName $ renderField nm fnm) [varE $ mkName "val"]
+                     ]
           | (Nm fnm, _, req) <- fs
-          , req
+          , let tup val = tupE [ app 'T.pack [litE $ StringL fnm]
+                               , app 'toJSON [varE $ mkName val]
+                               ]
           ]
 
 mkEnumToJSON :: Enum -> DecQ
@@ -177,7 +175,7 @@ mkEnumToJSON (Enum (Nm nm) ts)
       = caseE (varE $ mkName "val")
           [ match
               (conP (mkName $ renderType nm ++ renderType t) [])
-              (normalB $ appE (conE 'String) (appQ 'T.pack [litE $ StringL t]))
+              (normalB $ appE (conE 'String) (app 'T.pack [litE $ StringL t]))
               []
           | Nm t <- ts
           ]
@@ -193,8 +191,8 @@ mkUnionToJSON (Union (Nm nm) fs)
               (conP (mkName $ renderType nm ++ renderType ty) [varP $ mkName "ty"])
               (normalB $ appE (varE 'object) (listE [
                  tupE
-                   [ appQ 'T.pack [litE . StringL $ ty]
-                   , appQ 'object
+                   [ app 'T.pack [litE . StringL $ ty]
+                   , app 'object
                        [ listE
                          [ tupE [ appE (varE 'T.pack) (litE $ StringL "value")
                                 , appE (varE 'toJSON) (varE $ mkName "ty")
@@ -217,10 +215,10 @@ mkDataLens (Data (Nm nm) fs)
         ]
       | (Nm fnm, ty, isReq) <- fs
       , let lensName = mkName . drop 1 $ renderField nm fnm
-      , let sig = appTypeQ ''Lens' [ conT . mkName $ renderType nm
-                                   , return $ tyToTypeReq ty isReq
-                                   ]
-      , let body = appQ 'lens
+            sig = appTy ''Lens' [ conT . mkName $ renderType nm
+                                , return $ tyToTypeReq ty isReq
+                                ]
+            body = app 'lens
               [ varE . mkName $ renderField nm fnm
               , lamE [ varP $ mkName "s", varP $ mkName "a" ] $
                   recUpdE (varE $ mkName "s")
@@ -245,9 +243,9 @@ tyToTypeReq ty req
 
 tyToType :: Ty -> Type
 tyToType (Ty ty)
-  = case parseOnly (parser <* endOfInput) (BS8.pack ty) of
-      Left err -> error $ "Erorr parsing type: " ++ ty ++ ". Error: " ++ err
-      Right ty -> ty
+  = case parseOnly (parser <* endOfInput) (T.pack ty) of
+      Left err    -> error $ "Erorr parsing type: " ++ ty ++ ". Error: " ++ err
+      Right type_ -> type_
   where
     parser :: Parser Type
     parser
@@ -273,7 +271,7 @@ tyToType (Ty ty)
     mapParser = AppT (AppT (ConT ''Map) (ConT ''String)) <$> ("map[" *> parser <* "]")
 
     customParser :: Parser Type
-    customParser = ConT . mkName . renderType . BS8.unpack <$> A.takeWhile (inClass "a-zA-Z0-9_.")
+    customParser = ConT . mkName . renderType . T.unpack <$> A.takeWhile (inClass "a-zA-Z0-9_.")
 
 derivings :: CxtQ
 derivings
@@ -284,24 +282,16 @@ derivings
 
 --------------------------------------------------------------------------------
 
--- | app f [p1, p2, p3] == [| f p1 p2 p3 |]
-app :: Name -> [Exp] -> Exp
-app = foldl' AppE . VarE
+app :: Name -> [ExpQ] -> ExpQ
+app = foldl' appE . return . VarE
 
-appQ :: Name -> [ExpQ] -> ExpQ
-appQ = foldl' appE . return . VarE
-
-appType :: Name -> [Type] -> Type
-appType = foldl' AppT . ConT
-
-appTypeQ :: Name -> [TypeQ] -> TypeQ
-appTypeQ = foldl' appT . return . ConT
-
+appTy :: Name -> [TypeQ] -> TypeQ
+appTy = foldl' appT . return . ConT
 
 -- | idiom f [p1, p2, p3] == [| f <$> p1 <*> p2 <*> p3 |]
 idiom :: Q Exp -> [Q Exp] -> Q Exp
 idiom con []     = con
 idiom con (p:ps) = go (infixE (Just con) (varE '(<$>)) (Just p)) ps
   where
-    go p []     = p
-    go p (x:xs) = go (infixE (Just p) (varE '(<*>)) (Just x)) xs
+    go a []     = a
+    go a (x:xs) = go (infixE (Just a) (varE '(<*>)) (Just x)) xs

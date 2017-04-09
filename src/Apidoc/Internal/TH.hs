@@ -21,6 +21,12 @@ import           Apidoc.Internal.TH.Gen
 import           Apidoc.Internal.TH.Types
 --------------------------------------------------------------------------------
 
+apidoc :: FilePath -> DecsQ
+apidoc = read >=> gen
+
+apidocFromURL :: String -> DecsQ
+apidocFromURL = fetch >=> gen
+
 parse :: BL.ByteString -> Q T.Service
 parse json = case eitherDecode json of
       Left err  -> error $ "Parse error on apidoc spec: " ++ err
@@ -57,12 +63,6 @@ gen T.Service{..}
     models = map model' _serviceModels
     unions = map union' _serviceUnions
     enums  = map enum'  _serviceEnums
-
-apidoc :: FilePath -> DecsQ
-apidoc = read >=> gen
-
-apidocFromURL :: String -> DecsQ
-apidocFromURL = fetch >=> gen
 
 model' :: T.Model -> Data
 model' T.Model{..}

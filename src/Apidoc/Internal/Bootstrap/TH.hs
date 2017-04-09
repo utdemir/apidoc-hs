@@ -1,8 +1,5 @@
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeApplications  #-}
 
 module Apidoc.Internal.Bootstrap.TH where
 

@@ -1,6 +1,4 @@
-{-# LANGUAGE DeriveGeneric    #-}
 {-# LANGUAGE TemplateHaskell  #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Apidoc.Internal.Bootstrap where
 

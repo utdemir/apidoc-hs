@@ -1,5 +1,4 @@
 {-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TemplateHaskell   #-}
 
 module Apidoc.Internal.Bootstrap.TH where
 

@@ -50,8 +50,8 @@ gen T.Service{..}
   = fmap (concat . concat) . sequence $
       [ forM models $ \m ->
           (++) <$> sequence [ mkData m, mkDataToJSON m, mkDataFromJSON m ] <*> mkDataLens m
-      , forM unions $ sequence . flip map [ mkUnion, mkUnionToJSON, mkUnionFromJSON ] . (flip ($))
-      , forM enums  $ sequence . flip map [ mkEnum , mkEnumToJSON , mkEnumFromJSON  ] . (flip ($))
+      , forM unions $ sequence . flip map [ mkUnion, mkUnionToJSON, mkUnionFromJSON ] . flip ($)
+      , forM enums  $ sequence . flip map [ mkEnum , mkEnumToJSON , mkEnumFromJSON  ] . flip ($)
       ]
   where
     models = map model' _serviceModels

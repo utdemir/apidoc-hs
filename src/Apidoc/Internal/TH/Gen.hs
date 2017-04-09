@@ -69,10 +69,10 @@ mkDataFromJSON (Data (Nm nm) fs)
          [ litE . StringL $ renderType nm
          , lamE [varP $ mkName "obj"] $
              idiom (conE . mkName $ renderType nm)
-               [ (infixE
-                    (Just . varE $ mkName "obj")
-                    (varE $ if req then '(.:)  else '(.:?))
-                    (Just $ app 'T.pack [litE . StringL $ fnm]))
+               [ infixE
+                   (Just . varE $ mkName "obj")
+                   (varE $ if req then '(.:)  else '(.:?))
+                   (Just $ app 'T.pack [litE . StringL $ fnm])
                | (Nm fnm, _, req) <- fs
                ]
          ]
@@ -80,7 +80,7 @@ mkDataFromJSON (Data (Nm nm) fs)
 mkEnumFromJSON :: Enum -> DecQ
 mkEnumFromJSON (Enum (Nm nm) fs)
   = instanceD (return []) (appT (conT ''FromJSON) (conT . mkName $ renderType nm))
-      [(valD (varP 'parseJSON) (normalB body) [])]
+      [valD (varP 'parseJSON) (normalB body) []]
   where
     body
       = app 'withText
@@ -238,7 +238,7 @@ renderField modelName fieldName
 
 tyToTypeReq :: Ty -> Bool -> Type
 tyToTypeReq ty req
-  = (if req then id else (AppT (ConT ''Maybe))) $ tyToType ty
+  = (if req then id else AppT (ConT ''Maybe)) $ tyToType ty
 
 tyToType :: Ty -> Type
 tyToType (Ty ty)
@@ -275,9 +275,9 @@ tyToType (Ty ty)
 derivings :: CxtQ
 derivings
   = let defaultExts = map ConT [''Show, ''Eq, ''Typeable]
-    in  isExtEnabled DeriveGeneric >>= return . \case
-          True  -> ConT ''Generic : defaultExts
-          False -> defaultExts
+    in  fmap (\case True  -> ConT ''Generic : defaultExts
+                    False -> defaultExts)
+             (isExtEnabled DeriveGeneric)
 
 --------------------------------------------------------------------------------
 
@@ -292,5 +292,4 @@ idiom :: Q Exp -> [Q Exp] -> Q Exp
 idiom con []     = con
 idiom con (p:ps) = go (infixE (Just con) (varE '(<$>)) (Just p)) ps
   where
-    go a []     = a
-    go a (x:xs) = go (infixE (Just a) (varE '(<*>)) (Just x)) xs
+    go = foldl $ \ a x -> infixE (Just a) (varE '(<*>)) (Just x)

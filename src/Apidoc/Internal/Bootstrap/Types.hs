@@ -8,7 +8,7 @@ import           Data.Text
 import           Prelude    hiding (Enum)
 --------------------------------------------------------------------------------
 
-data UnionType
+newtype UnionType
   = UnionType
       { unionTypeType :: Text
       }
@@ -33,7 +33,7 @@ instance FromJSON Union where
 
 --------------------------------------------------------------------------------
 
-data EnumValue
+newtype EnumValue
   = EnumValue
       { enumValueName :: Text
       }

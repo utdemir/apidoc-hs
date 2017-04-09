@@ -154,14 +154,14 @@ mkDataToJSON (Data (Nm nm) fs)
     body
       = appE (varE 'object) . appE (varE 'catMaybes) $ listE
           [ if req
-              then appE (conE 'Just) $ tup "val"
+              then appE (conE 'Just) $ tup (app (mkName $ renderField nm fnm) [varE $ mkName "val"])
               else app 'fmap
-                     [ lamE [varP $ mkName "inner"] $ tup "inner"
+                     [ lamE [varP $ mkName "inner"] $ tup (varE $ mkName "inner")
                      , app (mkName $ renderField nm fnm) [varE $ mkName "val"]
                      ]
           | (Nm fnm, _, req) <- fs
           , let tup val = tupE [ app 'T.pack [litE $ StringL fnm]
-                               , app 'toJSON [varE $ mkName val]
+                               , app 'toJSON [val]
                                ]
           ]
 

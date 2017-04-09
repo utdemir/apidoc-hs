@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/utdemir/apidoc-hs.svg?branch=master)](https://travis-ci.org/utdemir/apidoc-hs)
 
-Generate Haskell data types from [Apidoc](http://apidoc.me/doc/) schemas with Template Haskell.
+Generate Haskell data types from [Apidoc](http://apidoc.me/doc/) schemas using Template Haskell.
 
 ## Exports
 

@@ -41,8 +41,10 @@ fetch url =
           (2, _, _) -> parse . rspBody $ resp
           _         -> error $ "Error fetching apidoc spec: " ++ show resp
 
--- TODO: Generate deprecation warnings
+-- TODO: Generate deprecation warnings.
+--         requires: https://ghc.haskell.org/trac/ghc/ticket/13551#ticket
 -- TODO: Generate API definition (probably servant?)
+-- TODO: Better errors (on name conflicts)
 gen :: T.Service -> DecsQ
 gen T.Service{..}
   = fmap (concat . concat) . sequence $

@@ -25,7 +25,6 @@ library
       Apidoc.Internal.Bootstrap.TH
       Apidoc.Internal.Bootstrap.Types
 
-
   build-depends:
       base >= 4.7 && < 5
     , aeson
@@ -41,4 +40,4 @@ library
     , network-uri
     , split
     , time
-    , lens
+    , microlens

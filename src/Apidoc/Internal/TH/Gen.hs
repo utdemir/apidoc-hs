@@ -7,7 +7,7 @@ module Apidoc.Internal.TH.Gen where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative
-import           Control.Lens.Lens
+import           Lens.Micro
 import           Data.Aeson
 import           Data.Attoparsec.Text     as A hiding (match)
 import           Data.Functor

@@ -4,7 +4,7 @@
 
 Generate Haskell data types from [Apidoc](http://apidoc.me/doc/) schemas with Template Haskell.
 
-------
+## Exports
 
 * **Apidoc.Types**
   * FromJSON and ToJSON instances for [Apidoc spec's](http://apidoc.me/bryzek/apidoc-spec/latest)

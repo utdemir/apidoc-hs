@@ -18,13 +18,13 @@ library
       Apidoc.Types
       Apidoc.TH
   other-modules:
-      Apidoc.Internal.TH
-      Apidoc.Internal.Types
-      Apidoc.Internal.TH.Gen
-      Apidoc.Internal.TH.Types
-      Apidoc.Internal.Bootstrap
-      Apidoc.Internal.Bootstrap.TH
-      Apidoc.Internal.Bootstrap.Types
+      Apidoc.TH.Internal.Stage1
+      Apidoc.TH.Internal.Stage1.TH
+      Apidoc.TH.Internal.Stage1.Types
+      Apidoc.TH.Internal.Stage2
+      Apidoc.TH.Internal.Gen.Simple
+      Apidoc.TH.Internal.Gen.Simple.Types
+      Apidoc.TH.Internal.Gen.Utils
   build-depends:
       base >= 4.7 && < 5
     , aeson

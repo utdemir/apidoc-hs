@@ -11,7 +11,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-git clone git@github.com:utdemir/apidoc-hs \
+git clone "git@github.com:utdemir/apidoc-hs" \
     --branch gh-pages --single-branch --depth 1 \
     "$tmp"
 
@@ -23,5 +23,4 @@ cd "$tmp"
 
 git add .
 git commit -m "Update haddock to $rev"
-git remote add origin git@github.com:utdemir/apidoc-hs
-git push --force --set-upstream origin gh-pages
+git push

@@ -5,7 +5,7 @@
 -- Currently models, enums and unions are supported.
 --
 -- The datatypes will have @Show@, @Eq@ and @Typeable@, @ToJSON@ and @FromJSON@
--- instances by default. They will also have @Generic@ instance if @DeriveGeneric@
+-- instances by default. They will also have @Generic@ instances if @DeriveGeneric@
 -- extension is enabled either globally or via using a LANGUAGE pragma.
 --
 -- This library does *not* resolve imports. The user is expected to call below
@@ -15,7 +15,7 @@
 -- of them by separating them to different modules and hiding the problematic
 -- names on imports.
 --
--- See 'Apidoc.Types' module as an example for the generated code.
+-- See "Apidoc.Types" module as an example for the generated code.
 --
 module Apidoc.TH where
 

@@ -17,7 +17,7 @@
 --   
 --   The datatypes will have <tt>Show</tt>, <tt>Eq</tt> and
 --   <tt>Typeable</tt>, <tt>ToJSON</tt> and <tt>FromJSON</tt> instances by
---   default. They will also have <tt>Generic</tt> instance if
+--   default. They will also have <tt>Generic</tt> instances if
 --   <tt>DeriveGeneric</tt> extension is enabled either globally or via
 --   using a LANGUAGE pragma.
 --   
@@ -28,7 +28,7 @@
 --   solve most of them by separating them to different modules and hiding
 --   the problematic names on imports.
 --   
---   See <a>Types</a> module as an example for the generated code.
+--   See <a>Apidoc.Types</a> module as an example for the generated code.
 module Apidoc.TH
 
 -- | Generates data types for given apidoc schema from a local file.

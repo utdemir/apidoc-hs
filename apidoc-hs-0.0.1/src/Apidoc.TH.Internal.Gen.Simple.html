@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE LambdaCase        #-}</span><span>
+</span><a name="line-2"></a><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><a name="line-3"></a><span class="hs-pragma">{-# LANGUAGE TemplateHaskell   #-}</span><span>
+</span><a name="line-4"></a><span>
+</span><a name="line-5"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Apidoc</span><span class="hs-operator">.</span><span class="hs-identifier">TH</span><span class="hs-operator">.</span><span class="hs-identifier">Internal</span><span class="hs-operator">.</span><span class="hs-identifier">Gen</span><span class="hs-operator">.</span><span class="hs-identifier">Simple</span><span>
+</span><a name="line-6"></a><span>  </span><span class="hs-special">(</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#mkData"><span class="hs-identifier hs-var">mkData</span></a><span>
+</span><a name="line-7"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#mkEnum"><span class="hs-identifier hs-var">mkEnum</span></a><span>
+</span><a name="line-8"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#mkUnion"><span class="hs-identifier hs-var">mkUnion</span></a><span>
+</span><a name="line-9"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#mkDataFromJSON"><span class="hs-identifier hs-var">mkDataFromJSON</span></a><span>
+</span><a name="line-10"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#mkUnionFromJSON"><span class="hs-identifier hs-var">mkUnionFromJSON</span></a><span>
+</span><a name="line-11"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#mkEnumFromJSON"><span class="hs-identifier hs-var">mkEnumFromJSON</span></a><span>
+</span><a name="line-12"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#mkDataToJSON"><span class="hs-identifier hs-var">mkDataToJSON</span></a><span>
+</span><a name="line-13"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#mkUnionToJSON"><span class="hs-identifier hs-var">mkUnionToJSON</span></a><span>
+</span><a name="line-14"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#mkEnumToJSON"><span class="hs-identifier hs-var">mkEnumToJSON</span></a><span>
+</span><a name="line-15"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#mkDataLens"><span class="hs-identifier hs-var">mkDataLens</span></a><span>
+</span><a name="line-16"></a><span>  </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Apidoc</span><span class="hs-operator">.</span><span class="hs-identifier">TH</span><span class="hs-operator">.</span><span class="hs-identifier">Internal</span><span class="hs-operator">.</span><span class="hs-identifier">Gen</span><span class="hs-operator">.</span><span class="hs-identifier">Simple</span><span class="hs-operator">.</span><span class="hs-identifier">Types</span><span>
+</span><a name="line-17"></a><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-18"></a><span>
+</span><a name="line-19"></a><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><a name="line-20"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Control</span><span class="hs-operator">.</span><span class="hs-identifier">Applicative</span><span>
+</span><a name="line-21"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Lens</span><span class="hs-operator">.</span><span class="hs-identifier">Micro</span><span>
+</span><a name="line-22"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Aeson</span><span>
+</span><a name="line-23"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Functor</span><span>
+</span><a name="line-24"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">HashMap</span><span class="hs-operator">.</span><span class="hs-identifier">Strict</span><span>      </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">HM</span><span>
+</span><a name="line-25"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">List</span><span>
+</span><a name="line-26"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Maybe</span><span>
+</span><a name="line-27"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Text</span><span>                </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">T</span><span>
+</span><a name="line-28"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Typeable</span><span>            </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Typeable</span><span class="hs-special">)</span><span>
+</span><a name="line-29"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">GHC</span><span class="hs-operator">.</span><span class="hs-identifier">Generics</span><span>             </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Generic</span><span class="hs-special">)</span><span>
+</span><a name="line-30"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Language</span><span class="hs-operator">.</span><span class="hs-identifier">Haskell</span><span class="hs-operator">.</span><span class="hs-identifier">TH</span><span>
+</span><a name="line-31"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Prelude</span><span>                  </span><span class="hs-keyword">hiding</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Enum</span><span class="hs-special">)</span><span>
+</span><a name="line-32"></a><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><a name="line-33"></a><span class="hs-keyword">import</span><span>           </span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html"><span class="hs-identifier">Apidoc</span><span class="hs-operator">.</span><span class="hs-identifier">TH</span><span class="hs-operator">.</span><span class="hs-identifier">Internal</span><span class="hs-operator">.</span><span class="hs-identifier">Gen</span><span class="hs-operator">.</span><span class="hs-identifier">Simple</span><span class="hs-operator">.</span><span class="hs-identifier">Types</span></a><span>
+</span><a name="line-34"></a><span class="hs-keyword">import</span><span>           </span><a href="Apidoc.TH.Internal.Gen.Utils.html"><span class="hs-identifier">Apidoc</span><span class="hs-operator">.</span><span class="hs-identifier">TH</span><span class="hs-operator">.</span><span class="hs-identifier">Internal</span><span class="hs-operator">.</span><span class="hs-identifier">Gen</span><span class="hs-operator">.</span><span class="hs-identifier">Utils</span></a><span>
+</span><a name="line-35"></a><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><a name="line-36"></a><span>
+</span><a name="line-37"></a><span class="hs-identifier">mkData</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Data"><span class="hs-identifier hs-type">Data</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">DecQ</span><span>
+</span><a name="line-38"></a><a name="mkData"><a href="Apidoc.TH.Internal.Gen.Simple.html#mkData"><span class="hs-identifier">mkData</span></a></a><span> </span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Data"><span class="hs-identifier hs-var">Data</span></a><span> </span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Nm"><span class="hs-identifier hs-var">Nm</span></a><span> </span><a name="local-6989586621679154176"><a href="#local-6989586621679154176"><span class="hs-identifier">nm</span></a></a><span class="hs-special">)</span><span> </span><a name="local-6989586621679154177"><a href="#local-6989586621679154177"><span class="hs-identifier">fs</span></a></a><span class="hs-special">)</span><span>
+</span><a name="line-39"></a><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">dataD</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">return</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><a href="#local-6989586621679154178"><span class="hs-identifier hs-var">name</span></a><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-identifier hs-var">Nothing</span><span> </span><span class="hs-special">[</span><span class="hs-identifier hs-var">recC</span><span> </span><a href="#local-6989586621679154178"><span class="hs-identifier hs-var">name</span></a><span> </span><a href="#local-6989586621679154179"><span class="hs-identifier hs-var">fields</span></a><span class="hs-special">]</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#derivings"><span class="hs-identifier hs-var">derivings</span></a><span>
+</span><a name="line-40"></a><span>  </span><span class="hs-keyword">where</span><span>
+</span><a name="line-41"></a><span>    </span><a name="local-6989586621679154178"><a href="#local-6989586621679154178"><span class="hs-identifier">name</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">mkName</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#renderType"><span class="hs-identifier hs-var">renderType</span></a><span> </span><a href="#local-6989586621679154176"><span class="hs-identifier hs-var">nm</span></a><span>
+</span><a name="line-42"></a><span>    </span><a name="local-6989586621679154179"><a href="#local-6989586621679154179"><span class="hs-identifier">fields</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">flip</span><span> </span><span class="hs-identifier hs-var">map</span><span> </span><a href="#local-6989586621679154177"><span class="hs-identifier hs-var">fs</span></a><span> </span><span class="hs-operator hs-var">$</span><span> </span><span class="hs-glyph">\</span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Nm"><span class="hs-identifier hs-var">Nm</span></a><span> </span><a name="local-6989586621679154180"><a href="#local-6989586621679154180"><span class="hs-identifier">fnm</span></a></a><span class="hs-special">,</span><span> </span><a name="local-6989586621679154181"><a href="#local-6989586621679154181"><span class="hs-identifier">ty</span></a></a><span class="hs-special">,</span><span> </span><a name="local-6989586621679154182"><a href="#local-6989586621679154182"><span class="hs-identifier">isReq</span></a></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-var">return</span><span>
+</span><a name="line-43"></a><span>      </span><span class="hs-special">(</span><span> </span><span class="hs-identifier hs-var">mkName</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#renderField"><span class="hs-identifier hs-var">renderField</span></a><span> </span><a href="#local-6989586621679154176"><span class="hs-identifier hs-var">nm</span></a><span> </span><a href="#local-6989586621679154180"><span class="hs-identifier hs-var">fnm</span></a><span>
+</span><a name="line-44"></a><span>      </span><span class="hs-special">,</span><span> </span><span class="hs-identifier hs-var">Bang</span><span> </span><span class="hs-identifier hs-var">NoSourceUnpackedness</span><span> </span><span class="hs-identifier hs-var">NoSourceStrictness</span><span>
+</span><a name="line-45"></a><span>      </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#tyToTypeReq"><span class="hs-identifier hs-var">tyToTypeReq</span></a><span> </span><a href="#local-6989586621679154181"><span class="hs-identifier hs-var">ty</span></a><span> </span><a href="#local-6989586621679154182"><span class="hs-identifier hs-var">isReq</span></a><span>
+</span><a name="line-46"></a><span>      </span><span class="hs-special">)</span><span>
+</span><a name="line-47"></a><span>
+</span><a name="line-48"></a><span>
+</span><a name="line-49"></a><span class="hs-identifier">mkEnum</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Enum"><span class="hs-identifier hs-type">Enum</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">DecQ</span><span>
+</span><a name="line-50"></a><a name="mkEnum"><a href="Apidoc.TH.Internal.Gen.Simple.html#mkEnum"><span class="hs-identifier">mkEnum</span></a></a><span> </span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Enum"><span class="hs-identifier hs-var">Enum</span></a><span> </span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Nm"><span class="hs-identifier hs-var">Nm</span></a><span> </span><a name="local-6989586621679154183"><a href="#local-6989586621679154183"><span class="hs-identifier">nm</span></a></a><span class="hs-special">)</span><span> </span><a name="local-6989586621679154184"><a href="#local-6989586621679154184"><span class="hs-identifier">fs</span></a></a><span class="hs-special">)</span><span>
+</span><a name="line-51"></a><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">dataD</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">return</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">mkName</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#renderType"><span class="hs-identifier hs-var">renderType</span></a><span> </span><a href="#local-6989586621679154183"><span class="hs-identifier hs-var">nm</span></a><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-identifier hs-var">Nothing</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">map</span><span> </span><a href="#local-6989586621679154185"><span class="hs-identifier hs-var">mk</span></a><span> </span><a href="#local-6989586621679154184"><span class="hs-identifier hs-var">fs</span></a><span class="hs-special">)</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#derivings"><span class="hs-identifier hs-var">derivings</span></a><span>
+</span><a name="line-52"></a><span>  </span><span class="hs-keyword">where</span><span>
+</span><a name="line-53"></a><span>    </span><a name="local-6989586621679154185"><a href="#local-6989586621679154185"><span class="hs-identifier">mk</span></a></a><span> </span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Nm"><span class="hs-identifier hs-var">Nm</span></a><span> </span><a name="local-6989586621679154186"><a href="#local-6989586621679154186"><span class="hs-identifier">fnm</span></a></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">recC</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">mkName</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#renderType"><span class="hs-identifier hs-var">renderType</span></a><span> </span><a href="#local-6989586621679154183"><span class="hs-identifier hs-var">nm</span></a><span> </span><span class="hs-operator hs-var">++</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#renderType"><span class="hs-identifier hs-var">renderType</span></a><span> </span><a href="#local-6989586621679154186"><span class="hs-identifier hs-var">fnm</span></a><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><a name="line-54"></a><span>
+</span><a name="line-55"></a><span class="hs-identifier">mkUnion</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Union"><span class="hs-identifier hs-type">Union</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">DecQ</span><span>
+</span><a name="line-56"></a><a name="mkUnion"><a href="Apidoc.TH.Internal.Gen.Simple.html#mkUnion"><span class="hs-identifier">mkUnion</span></a></a><span> </span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Union"><span class="hs-identifier hs-var">Union</span></a><span> </span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Nm"><span class="hs-identifier hs-var">Nm</span></a><span> </span><a name="local-6989586621679154187"><a href="#local-6989586621679154187"><span class="hs-identifier">nm</span></a></a><span class="hs-special">)</span><span> </span><a name="local-6989586621679154188"><a href="#local-6989586621679154188"><span class="hs-identifier">ts</span></a></a><span class="hs-special">)</span><span>
+</span><a name="line-57"></a><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">dataD</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">return</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">mkName</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#renderType"><span class="hs-identifier hs-var">renderType</span></a><span> </span><a href="#local-6989586621679154187"><span class="hs-identifier hs-var">nm</span></a><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-identifier hs-var">Nothing</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">map</span><span> </span><a href="#local-6989586621679154189"><span class="hs-identifier hs-var">mk</span></a><span> </span><a href="#local-6989586621679154188"><span class="hs-identifier hs-var">ts</span></a><span class="hs-special">)</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.html#derivings"><span class="hs-identifier hs-var">derivings</span></a><span>
+</span><a name="line-58"></a><span>  </span><span class="hs-keyword">where</span><span>
+</span><a name="line-59"></a><span>    </span><a name="local-6989586621679154189"><a href="#local-6989586621679154189"><span class="hs-identifier">mk</span></a></a><span> </span><a name="local-6989586621679154190"><a href="#local-6989586621679154190"><span class="hs-identifier">ty</span></a></a><span class="hs-glyph">@</span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Ty"><span class="hs-identifier hs-var">Ty</span></a><span> </span><a name="local-6989586621679154191"><a href="#local-6989586621679154191"><span class="hs-identifier">fnm</span></a></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">recC</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">mkName</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#renderType"><span class="hs-identifier hs-var">renderType</span></a><span> </span><a href="#local-6989586621679154187"><span class="hs-identifier hs-var">nm</span></a><span> </span><span class="hs-operator hs-var">++</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#renderType"><span class="hs-identifier hs-var">renderType</span></a><span> </span><a href="#local-6989586621679154191"><span class="hs-identifier hs-var">fnm</span></a><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span>
+</span><a name="line-60"></a><span>      </span><span class="hs-identifier hs-var">return</span><span> </span><span class="hs-special">(</span><span> </span><span class="hs-identifier hs-var">mkName</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#renderField"><span class="hs-identifier hs-var">renderField</span></a><span> </span><a href="#local-6989586621679154187"><span class="hs-identifier hs-var">nm</span></a><span> </span><a href="#local-6989586621679154191"><span class="hs-identifier hs-var">fnm</span></a><span>
+</span><a name="line-61"></a><span>             </span><span class="hs-special">,</span><span> </span><span class="hs-identifier hs-var">Bang</span><span> </span><span class="hs-identifier hs-var">NoSourceUnpackedness</span><span> </span><span class="hs-identifier hs-var">NoSourceStrictness</span><span>
+</span><a name="line-62"></a><span>             </span><span class="hs-special">,</span><span> </span><a href="Apidoc.TH.Internal.Gen.Utils.html#tyToType"><span class="hs-identifier hs-var">tyToType</span></a><span> </span><a href="#local-6989586621679154190"><span class="hs-identifier hs-var">ty</span></a><span>
+</span><a name="line-63"></a><span>             </span><span class="hs-special">)</span><span>
+</span><a name="line-64"></a><span>      </span><span class="hs-special">]</span><span>
+</span><a name="line-65"></a><span>
+</span><a name="line-66"></a><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><a name="line-67"></a><span>
+</span><a name="line-68"></a><span class="hs-identifier">mkDataFromJSON</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Data"><span class="hs-identifier hs-type">Data</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">DecQ</span><span>
+</span><a name="line-69"></a><a name="mkDataFromJSON"><a href="Apidoc.TH.Internal.Gen.Simple.html#mkDataFromJSON"><span class="hs-identifier">mkDataFromJSON</span></a></a><span> </span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Data"><span class="hs-identifier hs-var">Data</span></a><span> </span><span class="hs-special">(</span><a href="Apidoc.TH.Internal.Gen.Simple.Types.html#Nm"><span class="hs-identifier hs-var">Nm</span></a><span> </span><a name="local-6989586621679154192"><a href="#local-6989586621679154192"><span class="hs-identifier">nm</span></a></a><span class="hs-special">)</span><span> </span><a name="local-6989586621679154193"><a href="#local-6989586621679154193"><span class="hs-identifier">fs</span></a></a><span class="hs-special">)</span><span>
+</span><a name="line-70"></a><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">instanceD</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">return</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">appT</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">conT</span><span> </span><span class="hs-char">''FromJSON) (conT . mkName $ renderType nm))
+      [funD 'parseJSON [clause [] (normalB body) []]]
+  where
+    body
+      = app 'withObject
+         [ litE . StringL $ renderType nm
+         , lamE [varP $ mkName &quot;obj&quot;] $
+             idiom (conE . mkName $ renderType nm)
+               [ infixE
+                   (Just . varE $ mkName &quot;obj&quot;)
+                   (varE $ if req then '(.:)  else '(.:?))
+                   (Just $ app 'T.pack [litE . StringL $ fnm])
+               | (Nm fnm, _, req) &lt;- fs
+               ]
+         ]
+
+mkEnumFromJSON :: Enum -&gt; DecQ
+mkEnumFromJSON (Enum (Nm nm) fs)
+  = instanceD (return []) (appT (conT ''FromJSON) (conT . mkName $ renderType nm))
+      [valD (varP 'parseJSON) (normalB body) []]
+  where
+    body
+      = app 'withText
+         [ litE $ StringL (renderType nm)
+         , lamE [varP $ mkName &quot;val&quot;] $
+             app 'maybe
+               [ app 'fail [err]
+               , varE 'return
+               , app 'lookup [varE $ mkName &quot;val&quot;, listE $ map tup fs]
+               ]
+         ]
+
+    tup (Nm x) = tupE [ appE (varE 'T.pack) (litE $ StringL x)
+                      , conE . mkName $ renderType nm ++ renderType x
+                      ]
+
+    err = app 'concat
+      [ listE
+          [ litE $ StringL &quot;Error parsing &quot;
+          , app 'T.unpack [varE $ mkName &quot;val&quot;]
+          , litE . StringL $ &quot;: not a valid &quot; ++ renderType nm
+          ]
+      ]
+
+mkUnionFromJSON :: Union -&gt; DecQ
+mkUnionFromJSON (Union (Nm nm) ts)
+  = instanceD (return []) (appT (conT ''FromJSON) (conT . mkName $ renderType nm))
+      [funD 'parseJSON [clause [] (normalB body) []]]
+  where
+    body
+      = app 'withObject
+          [ litE . StringL $ renderType nm
+          , lamE [varP (mkName &quot;obj&quot;)] $
+              caseE (app 'HM.toList [varE $ mkName &quot;obj&quot;])
+                [ match
+                    (listP [tupP [varP (mkName &quot;tag&quot;), varP (mkName &quot;val&quot;)]])
+                    (guardedB
+                       [ (,) &lt;$&gt; normalG (
+                                   infixE
+                                     (Just . varE $ mkName &quot;tag&quot;)
+                                     (varE '(==))
+                                     (Just . appE (varE 'T.pack) . litE . StringL $ ty))
+                             &lt;*&gt; infixE
+                                   (Just . conE . mkName $ renderType nm ++ renderType ty)
+                                   (varE ('(&lt;$&gt;)))
+                                   (Just $ app 'withObject
+                                      [ litE . StringL $ renderType nm
+                                      , lamE [varP (mkName &quot;obj'&quot;)]
+                                             (infixE
+                                               (Just . varE $ mkName &quot;obj'&quot;)
+                                               (varE '(.:))
+                                               (Just $ app 'T.pack [litE $ StringL &quot;value&quot;]))
+                                      , varE $ mkName &quot;val&quot;
+                                      ]
+                                   )
+                       | (Ty ty) &lt;- ts
+                       ]
+                    )
+                    []
+                , match (return WildP) (normalB $ app 'fail [litE . StringL $ &quot;invalid union&quot;]) []
+                ]
+          ]
+
+--------------------------------------------------------------------------------
+
+mkDataToJSON :: Data -&gt; DecQ
+mkDataToJSON (Data (Nm nm) fs)
+  = instanceD (return []) (appT (conT ''ToJSON) (conT . mkName $ renderType nm))
+      [funD 'toJSON [clause [varP $ mkName &quot;val&quot;] (normalB body) []]]
+  where
+    body
+      = appE (varE 'object) . appE (varE 'catMaybes) $ listE
+          [ if req
+              then appE (conE 'Just) $ tup (app (mkName $ renderField nm fnm) [varE $ mkName &quot;val&quot;])
+              else app 'fmap
+                     [ lamE [varP $ mkName &quot;inner&quot;] $ tup (varE $ mkName &quot;inner&quot;)
+                     , app (mkName $ renderField nm fnm) [varE $ mkName &quot;val&quot;]
+                     ]
+          | (Nm fnm, _, req) &lt;- fs
+          , let tup val = tupE [ app 'T.pack [litE $ StringL fnm]
+                               , app 'toJSON [val]
+                               ]
+          ]
+
+mkEnumToJSON :: Enum -&gt; DecQ
+mkEnumToJSON (Enum (Nm nm) ts)
+  = instanceD (return []) (appT (conT ''ToJSON) (conT . mkName $ renderType nm))
+      [funD 'toJSON [clause [varP $ mkName &quot;val&quot;] (normalB body) []]]
+  where
+    body
+      = caseE (varE $ mkName &quot;val&quot;)
+          [ match
+              (conP (mkName $ renderType nm ++ renderType t) [])
+              (normalB $ appE (conE 'String) (app 'T.pack [litE $ StringL t]))
+              []
+          | Nm t &lt;- ts
+          ]
+
+mkUnionToJSON :: Union -&gt; DecQ
+mkUnionToJSON (Union (Nm nm) fs)
+  = instanceD (return []) (appT (conT ''ToJSON) (conT . mkName $ renderType nm))
+      [funD 'toJSON [clause [varP $ mkName &quot;val&quot;] (normalB body) []]]
+  where
+    body
+      = caseE (varE $ mkName &quot;val&quot;)
+          [ match
+              (conP (mkName $ renderType nm ++ renderType ty) [varP $ mkName &quot;ty&quot;])
+              (normalB $ appE (varE 'object) (listE [
+                 tupE
+                   [ app 'T.pack [litE . StringL $ ty]
+                   , app 'object
+                       [ listE
+                         [ tupE [ appE (varE 'T.pack) (litE $ StringL &quot;value&quot;)
+                                , appE (varE 'toJSON) (varE $ mkName &quot;ty&quot;)
+                                ]
+                         ]
+                       ]
+                   ]
+              ]))
+              []
+          | Ty ty &lt;- fs
+          ]
+
+--------------------------------------------------------------------------------
+
+mkDataLens :: Data -&gt; DecsQ
+mkDataLens (Data (Nm nm) fs)
+  = sequence . concat $
+      [ [ sigD lensName sig
+        , valD (varP lensName) (normalB body) []
+        ]
+      | (Nm fnm, ty, isReq) &lt;- fs
+      , let lensName = mkName . drop 1 $ renderField nm fnm
+            sig = appTy ''Lens' [ conT . mkName $ renderType nm
+                                , return $ tyToTypeReq ty isReq
+                                ]
+            body = app 'lens
+              [ varE . mkName $ renderField nm fnm
+              , lamE [ varP $ mkName &quot;s&quot;, varP $ mkName &quot;a&quot; ] $
+                  recUpdE (varE $ mkName &quot;s&quot;)
+                   [ return (mkName $ renderField nm fnm, VarE $ mkName &quot;a&quot;) ]
+              ]
+      ]
+
+derivings :: CxtQ
+derivings
+  = let defaultExts = map ConT [''Show, ''Eq, ''Typeable]
+    in  fmap (\case True  -&gt; ConT ''Generic : defaultExts
+                    False -&gt; defaultExts)
+             (isExtEnabled DeriveGeneric)
+</span></pre></body></html>

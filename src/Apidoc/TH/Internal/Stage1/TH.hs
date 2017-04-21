@@ -1,6 +1,8 @@
 {-# LANGUAGE RecordWildCards   #-}
 
-module Apidoc.Internal.Bootstrap.TH where
+module Apidoc.TH.Internal.Stage1.TH
+  ( stage1
+  ) where
 
 --------------------------------------------------------------------------------
 import           Data.Aeson                      (eitherDecode)
@@ -10,21 +12,20 @@ import           Language.Haskell.TH
 import           Language.Haskell.TH.Syntax
 import           Prelude                         hiding (Enum)
 --------------------------------------------------------------------------------
-import qualified Apidoc.Internal.Bootstrap.Types as T
-import           Apidoc.Internal.TH.Gen
-import           Apidoc.Internal.TH.Types
+import qualified Apidoc.TH.Internal.Stage1.Types as T
+import           Apidoc.TH.Internal.Gen.Simple
 --------------------------------------------------------------------------------
 
-bootstrap :: FilePath -> DecsQ
-bootstrap serviceSpec = do
+stage1 :: FilePath -> DecsQ
+stage1 serviceSpec = do
   addDependentFile serviceSpec
   json <- runIO (BL.readFile serviceSpec)
   case eitherDecode json of
     Left err  -> error $ "Parser error on " ++ serviceSpec ++ ": " ++ err
-    Right api -> bootstrap' api
+    Right api -> stage1' api
 
-bootstrap' :: T.Service -> DecsQ
-bootstrap' service
+stage1' :: T.Service -> DecsQ
+stage1' service
   = fmap (concat . concat) . sequence $
       [ mapM renderModel (T.serviceModels service)
       , mapM renderUnion (T.serviceUnions service)

@@ -2,30 +2,36 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Apidoc.Internal.TH.Gen where
+module Apidoc.TH.Internal.Gen.Simple
+  ( mkData
+  , mkEnum
+  , mkUnion
+  , mkDataFromJSON
+  , mkUnionFromJSON
+  , mkEnumFromJSON
+  , mkDataToJSON
+  , mkUnionToJSON
+  , mkEnumToJSON
+  , mkDataLens
+  , module Apidoc.TH.Internal.Gen.Simple.Types
+  ) where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative
 import           Lens.Micro
 import           Data.Aeson
-import           Data.Attoparsec.Text     as A hiding (match)
 import           Data.Functor
 import qualified Data.HashMap.Strict      as HM
-import           Data.Int
 import           Data.List
-import           Data.List.Split          (splitOn)
-import           Data.Map                 (Map)
 import           Data.Maybe
 import qualified Data.Text                as T
-import           Data.Time.Calendar       (Day)
-import           Data.Time.Clock          (UTCTime)
 import           Data.Typeable            (Typeable)
 import           GHC.Generics             (Generic)
 import           Language.Haskell.TH
 import           Prelude                  hiding (Enum)
-import           Text.Casing
 --------------------------------------------------------------------------------
-import           Apidoc.Internal.TH.Types
+import           Apidoc.TH.Internal.Gen.Simple.Types
+import           Apidoc.TH.Internal.Gen.Utils
 --------------------------------------------------------------------------------
 
 mkData :: Data -> DecQ
@@ -225,71 +231,9 @@ mkDataLens (Data (Nm nm) fs)
               ]
       ]
 
---------------------------------------------------------------------------------
-
-renderType :: String -> String
-renderType = pascal . last . splitOn "."
-
-renderField :: String -> String -> String
-renderField modelName fieldName
-  = "_" ++ camel (renderType modelName) ++ pascal fieldName
-
---------------------------------------------------------------------------------
-
-tyToTypeReq :: Ty -> Bool -> Type
-tyToTypeReq ty req
-  = (if req then id else AppT (ConT ''Maybe)) $ tyToType ty
-
-tyToType :: Ty -> Type
-tyToType (Ty ty)
-  = case parseOnly (parser <* endOfInput) (T.pack ty) of
-      Left err    -> error $ "Erorr parsing type: " ++ ty ++ ". Error: " ++ err
-      Right type_ -> type_
-  where
-    parser :: Parser Type
-    parser
-        = "boolean"           $> ConT ''Bool
-      <|> "date-iso8601"      $> ConT ''Day
-      <|> "date-time-iso8601" $> ConT ''UTCTime
-      <|> "decimal"           $> ConT ''Rational
-      <|> "double"            $> ConT ''Double
-      <|> "integer"           $> ConT ''Int32
-      <|> "long"              $> ConT ''Int64
-      <|> "object"            $> ConT ''Object
-      <|> "string"            $> ConT ''T.Text
-      <|> "unit"              $> ConT ''()
-      <|> "uuid"              $> ConT ''T.Text
-      <|> listParser
-      <|> mapParser
-      <|> customParser
-
-    listParser :: Parser Type
-    listParser = AppT (ConT ''[]) <$> ("[" *> parser <* "]")
-
-    mapParser :: Parser Type
-    mapParser = AppT (AppT (ConT ''Map) (ConT ''String)) <$> ("map[" *> parser <* "]")
-
-    customParser :: Parser Type
-    customParser = ConT . mkName . renderType . T.unpack <$> A.takeWhile (inClass "a-zA-Z0-9_.")
-
 derivings :: CxtQ
 derivings
   = let defaultExts = map ConT [''Show, ''Eq, ''Typeable]
     in  fmap (\case True  -> ConT ''Generic : defaultExts
                     False -> defaultExts)
              (isExtEnabled DeriveGeneric)
-
---------------------------------------------------------------------------------
-
-app :: Name -> [ExpQ] -> ExpQ
-app = foldl' appE . return . VarE
-
-appTy :: Name -> [TypeQ] -> TypeQ
-appTy = foldl' appT . return . ConT
-
--- | idiom f [p1, p2, p3] == [| f <$> p1 <*> p2 <*> p3 |]
-idiom :: Q Exp -> [Q Exp] -> Q Exp
-idiom con []     = con
-idiom con (p:ps) = go (infixE (Just con) (varE '(<$>)) (Just p)) ps
-  where
-    go = foldl $ \ a x -> infixE (Just a) (varE '(<*>)) (Just x)

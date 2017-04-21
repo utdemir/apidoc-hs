@@ -1,10 +1,10 @@
 {-# LANGUAGE TemplateHaskell  #-}
 
-module Apidoc.Internal.Bootstrap where
+module Apidoc.TH.Internal.Stage1 where
 
 --------------------------------------------------------------------------------
-import           Apidoc.Internal.Bootstrap.TH (bootstrap)
+import           Apidoc.TH.Internal.Stage1.TH (stage1)
 import           Prelude                      hiding (Enum)
 --------------------------------------------------------------------------------
 
-bootstrap "static/apidoc-spec-service.json"
+stage1 "static/apidoc-spec-service.json"

@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
-module Apidoc.Internal.TH where
+module Apidoc.TH.Internal.Stage2 where
 
 --------------------------------------------------------------------------------
 import           Control.Applicative
@@ -16,9 +16,8 @@ import           Network.URI (parseURI)
 import           Prelude                   hiding (Enum, read)
 import Language.Haskell.TH.Syntax
 --------------------------------------------------------------------------------
-import qualified Apidoc.Internal.Bootstrap as T
-import           Apidoc.Internal.TH.Gen
-import           Apidoc.Internal.TH.Types
+import qualified Apidoc.TH.Internal.Stage1 as T
+import           Apidoc.TH.Internal.Gen.Simple
 --------------------------------------------------------------------------------
 
 apidoc :: FilePath -> DecsQ
@@ -81,4 +80,3 @@ enum' :: T.Enum -> Enum
 enum' T.Enum{..}
   = Enum (Nm $ T.unpack _enumName) $
       map (Nm . T.unpack . T._enumValueName) _enumValues
-

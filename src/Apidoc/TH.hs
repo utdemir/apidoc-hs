@@ -20,8 +20,9 @@
 module Apidoc.TH where
 
 --------------------------------------------------------------------------------
-import qualified Apidoc.Internal.TH  as T
 import           Language.Haskell.TH (DecsQ)
+--------------------------------------------------------------------------------
+import qualified Apidoc.TH.Internal.Stage2  as T
 --------------------------------------------------------------------------------
 
 -- |

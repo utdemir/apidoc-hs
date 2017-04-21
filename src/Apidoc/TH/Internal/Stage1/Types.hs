@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Apidoc.Internal.Bootstrap.Types where
+module Apidoc.TH.Internal.Stage1.Types where
 
 --------------------------------------------------------------------------------
 import           Data.Aeson

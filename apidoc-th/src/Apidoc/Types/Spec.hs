@@ -9,7 +9,7 @@
 -- @
 -- 'Apidoc.TH.apidocFromURL' "http://www.apidoc.me/bryzek/apidoc-spec/0.11.68/service.json"
 -- @
-module Apidoc.Types where
+module Apidoc.Types.Spec where
 
 --------------------------------------------------------------------------------
 import Prelude hiding (Enum)

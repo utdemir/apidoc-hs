@@ -12,7 +12,8 @@ cleanup() {
 trap cleanup EXIT
 
 git clone "git@github.com:utdemir/apidoc-hs" \
-    --branch gh-pages --single-branch --depth 1 \
+    --branch gh-pages --single-branch \
+    --reference "$(pwd)/" --depth 1 \
     "$tmp"
 
 cp -r "$(stack path --local-doc-root)"/* "$tmp"

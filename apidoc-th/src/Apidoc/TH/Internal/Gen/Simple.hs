@@ -50,7 +50,7 @@ mkEnum :: Enum -> DecQ
 mkEnum (Enum (Nm nm) fs)
   = dataD (return []) (mkName $ renderType nm) [] Nothing (map mk fs) derivings
   where
-    mk (Nm fnm) = recC (mkName $ renderType nm ++ renderType fnm) []
+    mk (Nm fnm) = recC (mkName $ renderEnumValue nm fnm) []
 
 mkUnion :: Union -> DecQ
 mkUnion (Union (Nm nm) ts)
@@ -100,7 +100,7 @@ mkEnumFromJSON (Enum (Nm nm) fs)
          ]
 
     tup (Nm x) = tupE [ appE (varE 'T.pack) (litE $ StringL x)
-                      , conE . mkName $ renderType nm ++ renderType x
+                      , conE . mkName $ renderEnumValue nm x
                       ]
 
     err = app 'concat
@@ -179,7 +179,7 @@ mkEnumToJSON (Enum (Nm nm) ts)
     body
       = caseE (varE $ mkName "val")
           [ match
-              (conP (mkName $ renderType nm ++ renderType t) [])
+              (conP (mkName $ renderEnumValue nm t) [])
               (normalB $ appE (conE 'String) (app 'T.pack [litE $ StringL t]))
               []
           | Nm t <- ts
@@ -237,3 +237,4 @@ derivings
     in  fmap (\case True  -> ConT ''Generic : defaultExts
                     False -> defaultExts)
              (isExtEnabled DeriveGeneric)
+

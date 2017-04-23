@@ -15,7 +15,7 @@
 -- of them by separating them to different modules and hiding the problematic
 -- names on imports.
 --
--- See "Apidoc.Types" module as an example for the generated code.
+-- See "Apidoc.Types.Spec" module as an example for the generated code.
 --
 module Apidoc.TH where
 

@@ -28,6 +28,16 @@ renderField :: String -> String -> String
 renderField modelName fieldName
   = "_" ++ camel (renderType modelName) ++ pascal fieldName
 
+renderEnumValue :: String -> String -> String
+renderEnumValue name field
+  = renderType name ++ pascal (replace '.' '_' field)
+  where
+    replace :: Eq a => a -> a -> [a] -> [a]
+    replace _ _ [] = []
+    replace src target (x:xs) =  (if x == src then target else x) : replace src target xs
+
+
+
 tyToTypeReq :: Ty -> Bool -> Type
 tyToTypeReq ty req
   = (if req then id else AppT (ConT ''Maybe)) $ tyToType ty

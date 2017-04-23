@@ -18,6 +18,7 @@ import Language.Haskell.TH.Syntax
 --------------------------------------------------------------------------------
 import qualified Apidoc.TH.Internal.Stage1 as T
 import           Apidoc.TH.Internal.Gen.Simple
+import           Apidoc.TH.Internal.Gen.Servant
 --------------------------------------------------------------------------------
 
 apidoc :: FilePath -> DecsQ
@@ -48,7 +49,6 @@ fetch url =
 
 -- TODO: Generate deprecation warnings.
 --         requires: https://ghc.haskell.org/trac/ghc/ticket/13551#ticket
--- TODO: Generate API definition (probably servant?)
 -- TODO: Better errors (on name conflicts)
 gen :: T.Service -> DecsQ
 gen T.Service{..}
@@ -57,6 +57,7 @@ gen T.Service{..}
           (++) <$> sequence [ mkData m, mkDataToJSON m, mkDataFromJSON m ] <*> mkDataLens m
       , forM unions $ sequence . flip map [ mkUnion, mkUnionToJSON, mkUnionFromJSON ] . flip ($)
       , forM enums  $ sequence . flip map [ mkEnum , mkEnumToJSON , mkEnumFromJSON  ] . flip ($)
+      , forM _serviceResources mkApi
       ]
   where
     models = map model' _serviceModels

@@ -1,0 +1,7 @@
+resolver: lts-8.11
+
+packages:
+  - '.'
+  - location: '../apidoc-th'
+    extra-dep: true
+

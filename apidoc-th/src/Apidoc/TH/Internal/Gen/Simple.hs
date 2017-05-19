@@ -75,10 +75,10 @@ mkDataFromJSON (Data (Nm nm) fs)
          [ litE . StringL $ renderType nm
          , lamE [varP $ mkName "obj"] $
              idiom (conE . mkName $ renderType nm)
-               [ infixE
-                   (Just . varE $ mkName "obj")
+               [ uInfixE
+                   (varE $ mkName "obj")
                    (varE $ if req then '(.:)  else '(.:?))
-                   (Just $ app 'T.pack [litE . StringL $ fnm])
+                   (app 'T.pack [litE . StringL $ fnm])
                | (Nm fnm, _, req) <- fs
                ]
          ]
@@ -125,20 +125,20 @@ mkUnionFromJSON (Union (Nm nm) ts)
                     (listP [tupP [varP (mkName "tag"), varP (mkName "val")]])
                     (guardedB
                        [ (,) <$> normalG (
-                                   infixE
-                                     (Just . varE $ mkName "tag")
+                                   uInfixE
+                                     (varE $ mkName "tag")
                                      (varE '(==))
-                                     (Just . appE (varE 'T.pack) . litE . StringL $ ty))
+                                     (appE (varE 'T.pack) . litE . StringL $ ty))
                              <*> infixE
                                    (Just . conE . mkName $ renderType nm ++ renderType ty)
                                    (varE ('(<$>)))
                                    (Just $ app 'withObject
                                       [ litE . StringL $ renderType nm
                                       , lamE [varP (mkName "obj'")]
-                                             (infixE
-                                               (Just . varE $ mkName "obj'")
+                                             (uInfixE
+                                               (varE $ mkName "obj'")
                                                (varE '(.:))
-                                               (Just $ app 'T.pack [litE $ StringL "value"]))
+                                               (app 'T.pack [litE $ StringL "value"]))
                                       , varE $ mkName "val"
                                       ]
                                    )

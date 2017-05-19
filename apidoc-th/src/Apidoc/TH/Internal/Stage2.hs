@@ -35,7 +35,6 @@ parse json = case eitherDecode json of
 read :: FilePath -> Q T.Service
 read path = addDependentFile path >> runIO (BL.readFile path) >>= parse
 
--- TODO: Recursively fetch dependencies
 fetch :: String -> Q T.Service
 fetch url =
   case parseURI url of

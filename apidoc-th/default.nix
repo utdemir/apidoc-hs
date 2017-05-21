@@ -3,11 +3,11 @@
 }:
 
 let
-hs = pkgs.haskellPackages.haskellSrc2nix {
+haskellPackages = pkgs.haskell.packages.${compiler};
+hs = haskellPackages.haskellSrc2nix {
   name = "apidoc-th";
   src = ./.;
 };
-haskellPackages = pkgs.haskell.packages.${compiler};
 in rec {
   inherit hs;
   pkg = haskellPackages.callPackage hs {};

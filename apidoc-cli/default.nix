@@ -1,14 +1,20 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> {}
+, compiler ? "ghc802"
+}:
 
 let
-hs = pkgs.haskellPackages.haskellSrc2nix {
+haskellPackages = pkgs.haskell.packages.${compiler}.override {
+  overrides = se: su: {
+    apidoc-th =
+      let drv = se.callPackage ((import ../apidoc-th/default.nix { inherit pkgs; }).hs) {};
+      in  pkgs.haskell.lib.overrideCabal drv (su: {
+        doCheck = false; doHaddock = false;
+      });
+  };
+};
+hs = haskellPackages.haskellSrc2nix {
   name = "apidoc-cli";
   src = ./.;
-};
-haskellPackages = pkgs.haskellPackages.override {
-  overrides = se: su: {
-    apidoc-th = se.callPackage ((import ../apidoc-th/default.nix { inherit pkgs; }).hs) {};
-  };
 };
 in rec {
   inherit hs;

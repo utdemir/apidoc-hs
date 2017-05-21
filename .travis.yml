@@ -1,8 +1,8 @@
 language: nix
 
 env:
-  - PROJECT=apidoc-hs
   - PROJECT=apidoc-th
+  - PROJECT=apidoc-cli
 
 script: nix-build $PROJECT/default.nix -A pkg
 

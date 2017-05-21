@@ -1,26 +1,9 @@
-sudo: false
-language: generic
+language: nix
 
 env:
-  - PACKAGE=apidoc-th
-  - PACKAGE=apidoc-cli
+  - PROJECT=apidoc-hs
+  - PROJECT=apidoc-th
 
-cache:
-  directories:
-    - $HOME/.stack
+script: nix-build $PROJECT/default.nix -A pkg
 
-addons:
-  apt:
-    packages:
-      - libgmp-dev
-
-before_install:
-  - mkdir -p ~/.local/bin
-  - export PATH=$HOME/.local/bin:$PATH
-  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-
-install:
-  - stack --stack-yaml $PACKAGE/stack.yaml --no-terminal --install-ghc test --only-dependencies
-
-script:
-  - stack --stack-yaml $PACKAGE/stack.yaml --no-terminal test --haddock --no-haddock-deps
+sudo: true

@@ -2,10 +2,14 @@
 
 let
 hs = pkgs.haskellPackages.haskellSrc2nix {
-  name = "apidoc-th";
+  name = "apidoc-cli";
   src = ./.;
 };
-haskellPackages = pkgs.haskellPackages;
+haskellPackages = pkgs.haskellPackages.override {
+  overrides = se: su: {
+    apidoc-th = se.callPackage ((import ../apidoc-th/default.nix { inherit pkgs; }).hs) {};
+  };
+};
 in rec {
   inherit hs;
   pkg = haskellPackages.callPackage hs {};

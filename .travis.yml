@@ -1,9 +1,11 @@
 language: nix
 
 env:
-  - PROJECT=apidoc-th
-  - PROJECT=apidoc-cli
+  - PROJECT=apidoc-th  COMPILER=ghc7103
+  - PROJECT=apidoc-th  COMPILER=ghc802
+  - PROJECT=apidoc-th  COMPILER=ghcHEAD
+  - PROJECT=apidoc-cli COMPILER=ghc7103
+  - PROJECT=apidoc-cli COMPILER=ghc802
+  - PROJECT=apidoc-cli COMPILER=ghcHEAD
 
 script: nix-build $PROJECT/default.nix -A pkg
-
-sudo: true

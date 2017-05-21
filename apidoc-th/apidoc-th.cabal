@@ -11,10 +11,10 @@ build-type:     Simple
 cabal-version:  >= 1.10
 synopsis:       Generate Haskell data types from Apidoc schemas using Template Haskell.
 extra-source-files:
-  static/apidoc-api-service.json
-  static/apidoc-common-service.json
-  static/apidoc-generator-service.json
   static/apidoc-spec-service.json
+  test/static/apidoc-api-service.json
+  test/static/apidoc-common-service.json
+  test/static/apidoc-generator-service.json
 
 library
   default-language: Haskell2010
@@ -22,9 +22,6 @@ library
   exposed-modules:
       Apidoc.TH
       Apidoc.Types.Spec
-      Apidoc.Types.Api
-      Apidoc.Types.Generator
-      Apidoc.Types.Common
   other-modules:
       Apidoc.TH.Internal.Stage1
       Apidoc.TH.Internal.Stage1.TH
@@ -51,3 +48,10 @@ library
     , time
     , microlens
     , servant
+
+test-suite should-compile
+  type:           exitcode-stdio-1.0
+  main-is:        ShouldCompile.hs
+  hs-source-dirs: test/
+  build-depends: base
+               , apidoc-th

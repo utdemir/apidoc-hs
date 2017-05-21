@@ -1,12 +1,12 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Apidoc.Types.Api where
+module ShouldCompile.Generator where
 
 --------------------------------------------------------------------------------
-import Apidoc.TH
 import Apidoc.Types.Spec (Service)
-import Apidoc.Types.Generator (Generator, File)
-import Apidoc.Types.Common (Audit, Reference)
+import Apidoc.TH
 --------------------------------------------------------------------------------
 
-apidoc "static/apidoc-api-service.json"
+apidoc "test/static/apidoc-generator-service.json"

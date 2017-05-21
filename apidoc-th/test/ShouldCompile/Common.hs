@@ -1,10 +1,9 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Apidoc.Types.Generator where
+module ShouldCompile.Common where
 
 --------------------------------------------------------------------------------
-import Apidoc.Types.Spec (Service)
 import Apidoc.TH
 --------------------------------------------------------------------------------
 
-apidoc "static/apidoc-generator-service.json"
+apidoc "test/static/apidoc-common-service.json"

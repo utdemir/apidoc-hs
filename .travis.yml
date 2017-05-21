@@ -8,4 +8,4 @@ env:
   - PROJECT=apidoc-cli COMPILER=ghc802
   - PROJECT=apidoc-cli COMPILER=ghcHEAD
 
-script: nix-build $PROJECT/default.nix -A pkg
+script: travis_wait 30 nix-build $PROJECT/default.nix -A pkg

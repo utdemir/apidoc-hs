@@ -1,0 +1,4 @@
+:set -isrc/
+:set -Wall
+:set -ddump-splices -ddump-to-file
+:set -fobject-code

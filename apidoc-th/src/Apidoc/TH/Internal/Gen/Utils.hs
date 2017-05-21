@@ -9,14 +9,14 @@ import Data.Aeson
 import Data.List
 import Data.Functor
 import Control.Applicative
-import           Text.Casing
+import Text.Casing
 import Data.List.Split (splitOn)
 import qualified Data.Text as T
-import           Data.Attoparsec.Text     as A hiding (match)
-import           Data.Map                 (Map)
-import           Data.Int
-import           Data.Time.Calendar       (Day)
-import           Data.Time.Clock          (UTCTime)
+import Data.Attoparsec.Text as A hiding (match)
+import Data.Map (Map)
+import Data.Int
+import Data.Time.Calendar (Day)
+import Data.Time.Clock (UTCTime)
 --------------------------------------------------------------------------------
 import Apidoc.TH.Internal.Gen.Simple.Types
 --------------------------------------------------------------------------------
@@ -35,8 +35,6 @@ renderEnumValue name field
     replace :: Eq a => a -> a -> [a] -> [a]
     replace _ _ [] = []
     replace src target (x:xs) =  (if x == src then target else x) : replace src target xs
-
-
 
 tyToTypeReq :: Ty -> Bool -> Type
 tyToTypeReq ty req

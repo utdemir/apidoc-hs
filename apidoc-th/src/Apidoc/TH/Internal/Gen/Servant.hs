@@ -12,6 +12,8 @@ import qualified Data.Text as T
 import Language.Haskell.TH
 import Servant.API
 import Data.List.Split
+import Text.Casing
+import Data.Proxy
 
 import Apidoc.TH.Internal.Gen.Simple.Types
 import Apidoc.TH.Internal.Gen.Utils
@@ -21,11 +23,14 @@ import Apidoc.TH.Internal.Stage1
 mkApi :: Resource -> DecsQ
 mkApi res@Resource {..} =
   sequence
-    [ tySynD
-        (mkName . ("Api" ++) . renderType . T.unpack $ _resourceType)
-        []
-        (opsToType res)
+    [ tySynD tName [] (opsToType res)
+    , sigD fName (appT (conT ''Proxy) (conT $ mkName name))
+    , funD fName [clause [] (normalB $ conE 'Proxy) []]
     ]
+  where
+    name = renderType (T.unpack _resourceType) ++ "Api"
+    tName = mkName name
+    fName = mkName $ camel name
 
 opsToType :: Resource -> Q Type
 opsToType res@Resource {..} =
@@ -45,12 +50,14 @@ opToType _ op =
 path :: Operation -> [Q Type]
 path = map (litT . strTyLit) . splitPath . T.unpack . _operationPath
 
-basePath :: Resource -> [Q Type]
-basePath =
-  maybe [] (map (litT . strTyLit) . splitPath . T.unpack) . _resourcePath
-
 parameters :: Operation -> [Q Type]
-parameters = const []
+parameters Operation {..} =
+  flip map _operationParameters $ \Parameter {..} ->
+    appTy
+      ''QueryParam
+      [ litT . strTyLit $ T.unpack _parameterName
+      , return . tyToType . Ty $ T.unpack _parameterType
+      ]
 
 body :: Operation -> Maybe (Q Type)
 body = const Nothing
@@ -66,11 +73,12 @@ response Operation {..} =
     Response {..}:_ ->
       appTy
         (methodToTy _operationMethod)
-        [promotedNilT, (return . tyToType . Ty . T.unpack $ _responseType)]
+        [cts, return . tyToType . Ty $ T.unpack _responseType]
     [] ->
       error $
       "Currently Servant API generation requires at least one 2xx response. "
-
+  where
+    cts = promotedConsT `appT` conT ''JSON `appT` promotedNilT
 
 methodToTy :: Method -> Name
 methodToTy MethodGet = ''Get

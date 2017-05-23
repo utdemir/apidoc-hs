@@ -19,5 +19,4 @@ executable apidoc-cli
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , apidoc-th
-                     , servant
-                     , servant-client
+                     , http-client

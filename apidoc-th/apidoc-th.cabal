@@ -29,7 +29,6 @@ library
       Apidoc.TH.Internal.Stage2
       Apidoc.TH.Internal.Gen.Simple
       Apidoc.TH.Internal.Gen.Simple.Types
-      Apidoc.TH.Internal.Gen.Servant
       Apidoc.TH.Internal.Gen.Utils
   build-depends:
       base >= 4.7 && < 5
@@ -47,7 +46,6 @@ library
     , split
     , time
     , microlens
-    , servant
 
 test-suite should-compile
   type:           exitcode-stdio-1.0

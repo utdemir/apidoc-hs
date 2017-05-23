@@ -18,7 +18,6 @@ import Language.Haskell.TH.Syntax
 --------------------------------------------------------------------------------
 import qualified Apidoc.TH.Internal.Stage1 as T
 import           Apidoc.TH.Internal.Gen.Simple
-import           Apidoc.TH.Internal.Gen.Servant
 --------------------------------------------------------------------------------
 
 apidoc :: FilePath -> DecsQ
@@ -56,7 +55,6 @@ gen T.Service{..}
           (++) <$> sequence [ mkData m, mkDataToJSON m, mkDataFromJSON m ] <*> mkDataLens m
       , forM unions $ sequence . flip map [ mkUnion, mkUnionToJSON, mkUnionFromJSON ] . flip ($)
       , forM enums  $ sequence . flip map [ mkEnum , mkEnumToJSON , mkEnumFromJSON  ] . flip ($)
-      , forM _serviceResources mkApi
       ]
   where
     models = map model' _serviceModels
